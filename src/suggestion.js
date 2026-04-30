@@ -72,14 +72,23 @@ export default function SuggestionDashboard({ onBack }) {
     fetchSuggestions();
   }, [user]);
 
+  const [winWidth, setWinWidth] = useState(window.innerWidth);
+  const isMobile = winWidth < 768;
+
+  useEffect(() => {
+    const handleResize = () => setWinWidth(window.innerWidth);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   const styles = {
-    container: { padding: '30px', backgroundColor: '#f8fafc', minHeight: '100vh' },
-    header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '30px' },
-    title: { fontSize: '24px', fontWeight: '800', color: '#1e293b' },
-    subtitle: { color: '#64748b', fontSize: '14px' },
-    btnOutline: { padding: '8px 16px', border: '1px solid #e2e8f0', background: 'white', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px' },
-    card: { backgroundColor: 'white', padding: '24px', borderRadius: '20px', border: '1px solid #eef2f6', borderLeft: '5px solid #2563eb', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '16px' },
-    badge: { fontSize: '10px', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', padding: '4px 10px', borderRadius: '12px', fontWeight: '800' }
+    container: { padding: isMobile ? '16px' : '30px', backgroundColor: '#f8fafc', minHeight: '100vh' },
+    header: { display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: '30px', gap: isMobile ? '20px' : '0' },
+    title: { fontSize: isMobile ? '20px' : '24px', fontWeight: '800', color: '#1e293b' },
+    subtitle: { color: '#64748b', fontSize: isMobile ? '12px' : '14px', maxWidth: isMobile ? '100%' : '500px' },
+    btnOutline: { padding: isMobile ? '6px 12px' : '8px 16px', border: '1px solid #e2e8f0', background: 'white', borderRadius: '10px', cursor: 'pointer', fontWeight: 'bold', display: 'flex', alignItems: 'center', gap: '8px', fontSize: isMobile ? '11px' : '13px' },
+    card: { backgroundColor: 'white', padding: isMobile ? '16px' : '24px', borderRadius: '20px', border: '1px solid #eef2f6', borderLeft: '5px solid #2563eb', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', marginBottom: '16px' },
+    badge: { fontSize: isMobile ? '8px' : '10px', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', padding: '4px 10px', borderRadius: '12px', fontWeight: '800' }
   };
 
   return (
@@ -92,11 +101,11 @@ export default function SuggestionDashboard({ onBack }) {
               <p style={styles.subtitle}>Collaborative space for internal suggestions & workflow improvements.</p>
             </div>
           </div>
-          <div style={{ display: 'flex', gap: '15px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '15px', alignItems: 'center', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
             <button onClick={() => window.location.reload()} style={styles.btnOutline}>🔄 Refresh</button>
             <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: '20px', fontWeight: '900', color: '#2563eb' }}>84%</div>
-              <div style={{ fontSize: '10px', color: '#64748b', fontWeight: 'bold' }}>PARTICIPATION RATE</div>
+              <div style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '900', color: '#2563eb' }}>84%</div>
+              <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 'bold' }}>PARTICIPATION RATE</div>
             </div>
           </div>
         </header>
@@ -145,14 +154,14 @@ export default function SuggestionDashboard({ onBack }) {
                   <p style={{ fontSize: '14px', color: '#1e293b', lineHeight: '1.6', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontStyle: 'italic' }}>
                     "{s.content}"
                   </p>
-                  <div style={{ marginTop: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ marginTop: '20px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '16px' : '0' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#64748b' }}>Engagement:</span>
+                      <span style={{ fontSize: isMobile ? '10px' : '11px', fontWeight: 'bold', color: '#64748b' }}>Engagement:</span>
                       <span style={styles.badge}>{s.participation}</span>
                     </div>
-                    <div style={{ display: 'flex', gap: '10px' }}>
-                      <button style={{ ...styles.btnOutline, border: 'none', color: '#ef4444' }}>Archive</button>
-                      <button style={{ ...styles.btnOutline, background: '#2563eb', color: 'white', border: 'none' }}>Review Input</button>
+                    <div style={{ display: 'flex', gap: '10px', width: isMobile ? '100%' : 'auto' }}>
+                      <button style={{ ...styles.btnOutline, border: 'none', color: '#ef4444', flex: isMobile ? 1 : 'none', justifyContent: 'center' }}>Archive</button>
+                      <button style={{ ...styles.btnOutline, background: '#2563eb', color: 'white', border: 'none', flex: isMobile ? 1 : 'none', justifyContent: 'center' }}>Review Input</button>
                     </div>
                   </div>
                 </div>
