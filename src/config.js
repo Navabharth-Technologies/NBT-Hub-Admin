@@ -1,4 +1,4 @@
-export const BASE_URL = 'http://192.168.29.44:5000';
+export const BASE_URL = 'http://192.168.1.3:5000';
 export const API_ENDPOINTS = {
   LOGIN: `${BASE_URL}/api/login`,
   REGISTER: `${BASE_URL}/api/register`,

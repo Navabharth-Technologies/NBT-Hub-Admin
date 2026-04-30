@@ -75,15 +75,18 @@ export default function AdminAttendanceLogs({ onBack }) {
     return (name.includes(searchTerm.toLowerCase()) || id.includes(searchTerm.toLowerCase())) && !isDinesh;
   });
 
+  const winWidth = window.innerWidth;
+  const isMobile = winWidth < 768;
+
   return (
-    <div style={{ padding: '32px', background: '#F8FAFC', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '32px' }}>
+    <div style={{ padding: isMobile ? '16px' : '32px', background: '#F8FAFC', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: isMobile ? '20px' : '32px' }}>
         <button onClick={onBack} style={{ background: 'white', border: '1px solid #E2E8F0', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
           <ArrowLeft size={18} />
         </button>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Attendance Logs</h1>
-          <p style={{ margin: 0, color: '#64748B', fontWeight: '600' }}>Super Admin Workforce View</p>
+          <h1 style={{ fontSize: isMobile ? '18px' : '24px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Attendance Logs</h1>
+          <p style={{ margin: 0, color: '#64748B', fontWeight: '600', fontSize: isMobile ? '11px' : '13px' }}>Super Admin Workforce View</p>
         </div>
       </div>
 

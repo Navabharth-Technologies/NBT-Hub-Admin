@@ -314,7 +314,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
     tableValue: { fontSize: '16px', fontWeight: '900', color: '#0B1E3F' },
 
     table: { width: '100%', borderCollapse: 'collapse' },
-    th: { textAlign: 'left', padding: '16px 12px', fontSize: '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', borderBottom: '1px solid #F1F5F9' },
+    th: { textAlign: 'left', padding: isMobile ? '12px 16px' : '16px 24px', fontSize: isMobile ? '9px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', borderBottom: '1px solid #F1F5F9' },
     td: { padding: '20px 12px', borderBottom: '1px solid #F8FAFC' },
     empCell: { display: 'flex', alignItems: 'center', gap: '12px' },
     avatar: { width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', fontWeight: '900', fontSize: '12px' },
@@ -336,7 +336,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
       backgroundColor: 'white', 
       border: '1.5px solid #E2E8F0', 
       borderRadius: '12px', 
-      fontSize: '14px', 
+      fontSize: isMobile ? '12px' : '14px', 
       fontWeight: '700', 
       color: '#64748B', 
       cursor: 'pointer',
@@ -347,16 +347,16 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
       alignItems: 'center', 
       justifyContent: 'center',
       textAlign: 'center',
-      padding: '10px 24px', 
+      padding: isMobile ? '8px 16px' : '10px 24px', 
       backgroundColor: '#0F172A', 
       color: 'white', 
       border: 'none', 
       borderRadius: '14px', 
-      fontSize: '13px', 
+      fontSize: isMobile ? '12px' : '13px', 
       fontWeight: '800', 
       cursor: 'pointer',
       boxShadow: '0 4px 12px rgba(15, 23, 42, 0.2)',
-      minWidth: '160px',
+      minWidth: isMobile ? '120px' : '160px',
       lineHeight: '1.2'
     }
   };
@@ -375,7 +375,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
               <ArrowLeft size={20} color="#64748b" />
             </div>
           )}
-          <div style={{ fontSize: '14px', fontWeight: '800', color: '#2563EB', borderBottom: '2.5px solid #2563EB', paddingBottom: '10px', cursor: 'pointer' }}>Attendance Logs</div>
+          <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: '800', color: '#2563EB', borderBottom: '2.5px solid #2563EB', paddingBottom: '10px', cursor: 'pointer' }}>Attendance Logs</div>
         </div>
 
         {/* Header Row with Search and Filters */}
@@ -419,22 +419,22 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
             <div style={{ backgroundColor: 'white', padding: '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ backgroundColor: '#F0FDF4', padding: '6px', borderRadius: '8px' }}><FileText size={16} color="#10B981" /></div>
               <div>
-                <div style={{ fontSize: '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>TOTAL LOGS</div>
-                <div style={{ fontSize: '15px', fontWeight: '900', color: '#0B1E3F' }}>{metrics.totalLogs}</div>
+                <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>TOTAL LOGS</div>
+                <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#0B1E3F' }}>{metrics.totalLogs}</div>
               </div>
             </div>
-            <div style={{ backgroundColor: 'white', padding: '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ backgroundColor: '#EFF6FF', padding: '6px', borderRadius: '8px' }}><UserCheck size={16} color="#3B82F6" /></div>
               <div>
-                <div style={{ fontSize: '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>PRESENT</div>
-                <div style={{ fontSize: '15px', fontWeight: '900', color: '#3B82F6' }}>{metrics.present}</div>
+                <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>PRESENT</div>
+                <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#3B82F6' }}>{metrics.present}</div>
               </div>
             </div>
-            <div style={{ backgroundColor: 'white', padding: '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
               <div style={{ backgroundColor: '#FEF2F2', padding: '6px', borderRadius: '8px' }}><LogOut size={16} color="#EF4444" /></div>
               <div>
-                <div style={{ fontSize: '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>ABSENT</div>
-                <div style={{ fontSize: '15px', fontWeight: '900', color: '#EF4444' }}>{metrics.absent}</div>
+                <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>ABSENT</div>
+                <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#EF4444' }}>{metrics.absent}</div>
               </div>
             </div>
           </div>
