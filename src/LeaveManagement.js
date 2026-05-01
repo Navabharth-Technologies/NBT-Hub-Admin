@@ -458,25 +458,25 @@ export default function LeaveManagement({ onBack }) {
               onClick={e => e.stopPropagation()}
             >
               {/* Header section */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '40px' }}>
-                <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                  <button onClick={() => setSelectedLeave(null)} style={{ border: 'none', background: '#f8fafc', width: '35px', height: '35px', borderRadius: '10px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <ArrowLeft size={16} />
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '30px' : '40px', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: isMobile ? '12px' : '20px', alignItems: 'center' }}>
+                  <button onClick={() => setSelectedLeave(null)} style={{ border: 'none', background: '#f8fafc', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                    <ArrowLeft size={14} />
                   </button>
-                  <div style={{ width: '65px', height: '65px', borderRadius: '50%', backgroundColor: '#0B1E3F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: '24px', fontWeight: '1000' }}>
+                  <div style={{ width: isMobile ? '50px' : '65px', height: isMobile ? '50px' : '65px', borderRadius: '50%', backgroundColor: '#0B1E3F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: isMobile ? '18px' : '24px', fontWeight: '1000', flexShrink: 0 }}>
                     {(selectedLeave.user_name || selectedLeave.name || 'E').charAt(0)}
                   </div>
-                  <div>
-                    <h2 style={{ margin: 0, fontSize: '22px', fontWeight: '1000', color: '#0B1E3F' }}>{selectedLeave.user_name || selectedLeave.name}</h2>
-                    <div style={{ display: 'flex', gap: '15px', marginTop: '4px' }}>
-                      <span style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8' }}>ID: {selectedLeave.user_id || selectedLeave.employee_id || '---'}</span>
-                      <span style={{ fontSize: '11px', fontWeight: '900', color: '#94a3b8' }}>{selectedLeave.role || 'Subordinate Member'}</span>
+                  <div style={{ minWidth: 0 }}>
+                    <h2 style={{ margin: 0, fontSize: isMobile ? '16px' : '22px', fontWeight: '1000', color: '#0B1E3F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedLeave.user_name || selectedLeave.name}</h2>
+                    <div style={{ display: 'flex', gap: '10px', marginTop: '2px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: isMobile ? '9px' : '11px', fontWeight: '900', color: '#94a3b8' }}>ID: {selectedLeave.user_id || selectedLeave.employee_id || '---'}</span>
+                      <span style={{ fontSize: isMobile ? '9px' : '11px', fontWeight: '900', color: '#3863A8' }}>{selectedLeave.role || 'Member'}</span>
                     </div>
                   </div>
                 </div>
-                <div style={{ textAlign: 'right' }}>
-                  <p style={{ margin: '0 0 8px 0', fontSize: '9px', fontWeight: '1000', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Request Status</p>
-                  <div style={{ padding: '8px 25px', borderRadius: '12px', background: '#fff9e6', color: '#d97706', fontSize: '12px', fontWeight: '1000' }}>
+                <div style={{ textAlign: isMobile ? 'left' : 'right', width: isMobile ? '100%' : 'auto' }}>
+                  <p style={{ margin: '0 0 5px 0', fontSize: '9px', fontWeight: '1000', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Request Status</p>
+                  <div style={{ padding: isMobile ? '6px 15px' : '8px 25px', borderRadius: '10px', background: '#fff9e6', color: '#d97706', fontSize: isMobile ? '10px' : '12px', fontWeight: '1000', display: 'inline-block' }}>
                     {String(selectedLeave.status || 'PENDING').toUpperCase()}
                   </div>
                 </div>
@@ -599,22 +599,21 @@ export default function LeaveManagement({ onBack }) {
 
               {/* Action Buttons */}
               {String(selectedLeave.status || '').toUpperCase() === 'PENDING' && 
-               ['PROJECT MANAGER', 'HR', 'TEAM LEADER', 'TL', 'PM', 'MANAGER', 'LEAD', 'HEAD', 'EXECUTIVE', 'DIRECTOR'].some(r => String(selectedLeave.role || '').toUpperCase().includes(r)) && (
-                <div style={{ display: 'flex', gap: '20px', width: '100%' }}>
+               ['PROJECT MANAGER', 'HR', 'TEAM LEADER', 'TL', 'PM', 'MANAGER', 'LEAD', 'HEAD', 'EXECUTIVE', 'DIRECTOR'].some(r => String(selectedLeave.role || '').toUpperCase().includes(r)) &&                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '15px', width: '100%' }}>
                   <button 
                     onClick={() => handleAction(selectedLeave.id, 'Rejected', adminRemarks)}
-                    style={{ flex: 1, padding: '20px', borderRadius: '18px', border: 'none', backgroundColor: '#fee2e2', color: '#ef4444', fontWeight: '1000', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                    style={{ flex: 1, padding: isMobile ? '15px' : '20px', borderRadius: '18px', border: 'none', backgroundColor: '#fee2e2', color: '#ef4444', fontWeight: '1000', fontSize: isMobile ? '12px' : '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
                   >
                     <XCircle size={18} /> Reject Request
                   </button>
                   <button 
                     onClick={() => handleAction(selectedLeave.id, 'Approved', adminRemarks)}
-                    style={{ flex: 2, padding: '20px', borderRadius: '18px', border: 'none', backgroundColor: '#0B1E3F', color: 'white', fontWeight: '1000', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 25px rgba(11,30,63,0.2)' }}
+                    style={{ flex: 2, padding: isMobile ? '15px' : '20px', borderRadius: '18px', border: 'none', backgroundColor: '#0B1E3F', color: 'white', fontWeight: '1000', fontSize: isMobile ? '12px' : '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 25px rgba(11,30,63,0.2)' }}
                   >
                     <CheckCircle size={18} /> Approve Leave
                   </button>
                 </div>
-              )}
+              }
             </motion.div>
           </motion.div>
         )}

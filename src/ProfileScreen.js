@@ -31,9 +31,9 @@ export default function ProfileScreen({ onBack }) {
   const local = loadLocalProfile();
 
   const [name, setName] = useState(user?.name || local.name || 'Dinesh Sir');
-  const [role, setRole] = useState(user?.role || local.role || 'SUPERADMIN');
+  const [role, setRole] = useState(user?.role || local.role || 'Super Admin');
   const [employeeId, setEmployeeId] = useState(local.employee_id || user?.employee_id || '20250');
-  const [team, setTeam] = useState(local.team || user?.team || 'EXECUTIVE LEADERSHIP');
+  const [team, setTeam] = useState(local.team || user?.team || 'Executive Leadership');
   const [phone, setPhone] = useState(local.phone_number || user?.phone_number || '9874521785');
   const [aboutMe, setAboutMe] = useState(local.about_me || user?.about_me || 'Founder & CEO of Navabharath Technologies. Visionary leader dedicated to empowering excellence through innovative educational and infrastructure solutions.');
   const [dob, setDob] = useState(local.date_of_birth || user?.date_of_birth || '15/08/1987');
@@ -254,12 +254,12 @@ export default function ProfileScreen({ onBack }) {
     managerBox: { backgroundColor: '#F8FAFC', padding: '10px 15px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px' },
     managerLabel: { fontSize: '9px', color: '#94A3B8', fontWeight: '800', textTransform: 'uppercase' },
     managerName: { fontSize: '12px', color: '#0B1E3F', fontWeight: '900' },
-    infoGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '15px', marginTop: '20px' },
-    infoCard: { backgroundColor: 'white', padding: '25px', borderRadius: '20px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '20px', transition: 'transform 0.2s' },
-    iconCircle: { width: '50px', height: '50px', borderRadius: '15px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' },
-    label: { fontSize: '10px', color: '#94A3B8', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' },
+    infoGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '15px', marginTop: '20px' },
+    infoCard: { backgroundColor: '#F5F9FF', padding: '25px', borderRadius: '20px', border: '1px solid #E0EFFF', display: 'flex', alignItems: 'center', gap: '20px', transition: 'transform 0.2s' },
+    iconCircle: { width: '50px', height: '50px', borderRadius: '15px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', boxShadow: '0 2px 6px rgba(37, 99, 235, 0.08)' },
+    label: { fontSize: '11px', color: '#64748B', fontWeight: '800', letterSpacing: '0.2px' },
     value: { fontSize: '15px', color: '#0B1E3F', fontWeight: '1000', marginTop: '4px' },
-    aboutSection: { marginTop: '30px', backgroundColor: '#F8FAFC', padding: '30px', borderRadius: '24px', border: '1px solid #F1F5F9' },
+    aboutSection: { marginTop: '30px', backgroundColor: '#F5F9FF', padding: '30px', borderRadius: '24px', border: '1px solid #E0EFFF' },
     logoutBtn: { marginTop: '50px', padding: '15px 60px', borderRadius: '16px', border: '2px solid #EF4444', backgroundColor: 'white', color: '#EF4444', fontSize: '14px', fontWeight: '1000', cursor: 'pointer', display: 'block', margin: '50px auto 0', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)' }
   };
 
@@ -329,17 +329,11 @@ export default function ProfileScreen({ onBack }) {
                 <div style={{ ...styles.value, fontSize: '12px' }}>{user?.email || 'dinesh@navabharathtechnologies.com'}</div>
               </div>
             </div>
-            <div style={styles.infoCard}>
-              <div style={styles.iconCircle}><Calendar size={18} /></div>
-              <div>
-                <div style={styles.label}>Date of Joining</div>
-                <div style={styles.value}>10 November 2023</div>
-              </div>
             </div>
-          </div>
+
 
           <div style={styles.aboutSection}>
-            <div style={{ ...styles.label, marginBottom: '10px', fontSize: '12px', color: '#0B1E3F' }}>About me</div>
+            <div style={{ ...styles.label, marginBottom: '10px', fontSize: '13px', color: '#0B1E3F' }}>About Me</div>
             <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>
               {aboutMe}
             </div>
