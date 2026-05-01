@@ -10,8 +10,11 @@ import { API_ENDPOINTS } from './config';
     const fetchAnalytics = async () => {
       setLoading(true);
       try {
-        const token = localStorage.getItem('token');
-        const headers = { 'Authorization': token ? `Bearer ${token}` : '' };
+        const token = String(localStorage.getItem('token') || '').trim();
+        const headers = { 
+          'Authorization': token && token !== 'undefined' ? `Bearer ${token}` : '',
+          'Accept': 'application/json'
+        };
 
         // Fetch actual live data from backend to compute analytics
         const [usersRes, teamsRes, attRes] = await Promise.all([

@@ -48,10 +48,10 @@ const RewardsModule = ({ onBack }) => {
     const fetchRecognitionData = async () => {
       try {
         setDataLoading(true);
-        const token = localStorage.getItem('token');
+        const token = String(localStorage.getItem('token') || '').trim();
         const headers = { 
           'Accept': 'application/json',
-          'Authorization': token ? `Bearer ${token}` : ''
+          'Authorization': token && token !== 'undefined' && token !== 'null' ? `Bearer ${token}` : ''
         };
 
         // Fetch leaderboard, all users, and all real award records in parallel

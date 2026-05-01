@@ -237,15 +237,59 @@ export default function LeaveManagement({ onBack }) {
 
   const s = {
     container: { padding: winWidth < 768 ? '20px' : '30px 40px', backgroundColor: '#f8fafc', minHeight: '100vh' },
-    header: { display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '30px' },
-    backBtn: { background: 'white', border: '1px solid #e2e8f0', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' },
-    statsGrid: { display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginBottom: '30px' },
-    statCard: { backgroundColor: 'white', padding: '20px', borderRadius: '20px', border: '1px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' },
+    header: { 
+      display: 'flex', 
+      flexDirection: 'row', 
+      alignItems: 'center', 
+      justifyContent: 'space-between', 
+      marginBottom: '30px',
+      gap: isMobile ? '10px' : '20px',
+      flexWrap: isMobile ? 'wrap' : 'nowrap'
+    },
+    backBtn: { 
+      background: 'white', 
+      border: '1px solid #e2e8f0', 
+      padding: isMobile ? '8px 12px' : '10px 15px', 
+      borderRadius: '12px', 
+      cursor: 'pointer', 
+      display: 'flex', 
+      alignItems: 'center', 
+      gap: '8px',
+      fontSize: isMobile ? '12px' : '13px',
+      fontWeight: '700'
+    },
+    statsGrid: { 
+      display: 'grid', 
+      gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(auto-fit, minmax(200px, 1fr))', 
+      gap: isMobile ? '10px' : '20px', 
+      marginBottom: '30px' 
+    },
+    statCard: { 
+      backgroundColor: 'white', 
+      padding: isMobile ? '15px' : '20px', 
+      borderRadius: '20px', 
+      border: '1px solid #f1f5f9', 
+      boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)',
+      textAlign: isMobile ? 'center' : 'left'
+    },
     tabs: { display: 'flex', gap: '20px', marginBottom: '25px', borderBottom: '1.5px solid #e2e8f0' },
     tab: (active) => ({ padding: '12px 10px', fontSize: '14px', fontWeight: '900', color: active ? '#0B1E3F' : '#64748b', cursor: 'pointer', borderBottom: active ? '3.5px solid #0B1E3F' : '3.5px solid transparent', transition: '0.2s' }),
     searchContainer: { display: 'flex', gap: '15px', marginBottom: '20px', alignItems: 'center' },
     searchInput: { flex: 1, padding: '12px 20px', borderRadius: '15px', border: '1.5px solid #e2e8f0', outline: 'none', fontSize: '14px', fontWeight: '700' },
-    card: { backgroundColor: 'white', padding: '25px', borderRadius: '25px', border: '1.5px solid #f1f5f9', marginBottom: '15px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '20px' },
+    card: { 
+      backgroundColor: 'white', 
+      padding: isMobile ? '15px 12px' : '25px', 
+      borderRadius: '25px', 
+      border: '1.5px solid #f1f5f9', 
+      marginBottom: '15px', 
+      display: 'flex', 
+      flexDirection: 'row',
+      justifyContent: 'space-between', 
+      alignItems: 'center', 
+      gap: isMobile ? '8px' : '20px',
+      position: 'relative',
+      overflow: 'hidden'
+    },
     badge: (status) => {
       const s = String(status || '').toUpperCase();
       let bg = '#f1f5f9', color = '#64748b';
@@ -259,12 +303,21 @@ export default function LeaveManagement({ onBack }) {
   return (
     <div style={s.container}>
       <div style={s.header}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-          <button style={s.backBtn} onClick={onBack}><ArrowLeft size={18} /> Back</button>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: '1000', color: '#0B1E3F' }}>Leave Management</h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '15px' }}>
+          <button style={s.backBtn} onClick={onBack}><ArrowLeft size={16} /> {!isMobile && 'Back'}</button>
+          <h1 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px', fontWeight: '1000', color: '#0B1E3F' }}>Leave Management</h1>
         </div>
-        <button style={{ ...s.backBtn, background: '#0B1E3F', color: 'white', border: 'none' }} onClick={fetchLeaves}>
-          <RefreshCcw size={16} /> Sync Data
+        <button 
+          style={{ 
+            ...s.backBtn, 
+            background: '#0B1E3F', 
+            color: 'white', 
+            border: 'none', 
+            padding: isMobile ? '8px 10px' : '10px 15px'
+          }} 
+          onClick={fetchLeaves}
+        >
+          <RefreshCcw size={14} /> {isMobile ? 'Sync' : 'Sync Data'}
         </button>
       </div>
 
@@ -306,8 +359,8 @@ export default function LeaveManagement({ onBack }) {
         ) : filteredRequests.length === 0 ? (
           <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>No leave requests found.</div>
         ) : activeTab === 'HISTORY' ? (
-          <div style={{ backgroundColor: 'white', borderRadius: '25px', overflow: 'hidden', border: '1.5px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+          <div style={{ backgroundColor: 'white', borderRadius: '25px', overflowX: 'auto', border: '1.5px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
+            <table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1.5px solid #f1f5f9' }}>
                 <tr>
                   <th style={{ padding: '18px 24px', fontSize: '11px', fontWeight: '1000', color: '#64748b', textTransform: 'uppercase' }}>Employee</th>
@@ -362,28 +415,28 @@ export default function LeaveManagement({ onBack }) {
               style={s.card}
               onClick={() => setSelectedLeave(req)}
             >
-              <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                <div style={{ width: '50px', height: '50px', borderRadius: '15px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '1000', color: '#0B1E3F' }}>
+              <div style={{ display: 'flex', gap: isMobile ? '10px' : '20px', alignItems: 'center', flex: 1, minWidth: 0 }}>
+                <div style={{ width: isMobile ? '40px' : '50px', height: isMobile ? '40px' : '50px', borderRadius: '15px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? '16px' : '18px', fontWeight: '1000', color: '#0B1E3F', flexShrink: 0 }}>
                   {(req.user_name || req.name || 'E').charAt(0)}
                 </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: '16px', fontWeight: '1000', color: '#0B1E3F' }}>{req.user_name || req.name}</h4>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px' }}>
-                    <p style={{ margin: 0, fontSize: '12px', color: '#64748b', fontWeight: '700' }}>{req.leave_type} • {req.no_of_days || calculateDays(req.start_date, req.end_date)} Days</p>
+                <div style={{ minWidth: 0 }}>
+                  <h4 style={{ margin: 0, fontSize: isMobile ? '14px' : '16px', fontWeight: '1000', color: '#0B1E3F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.user_name || req.name}</h4>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', flexWrap: 'wrap' }}>
+                    <p style={{ margin: 0, fontSize: isMobile ? '10px' : '12px', color: '#64748b', fontWeight: '700' }}>{isMobile ? req.leave_type?.split(' ')[0] : req.leave_type} • {req.no_of_days}d</p>
                     {['PROJECT MANAGER', 'HR', 'TEAM LEADER', 'TL', 'PM'].some(r => String(req.role || '').toUpperCase().includes(r)) && (
-                      <span style={{ fontSize: '9px', fontWeight: '900', color: '#3863A8', backgroundColor: '#dbeafe', padding: '2px 8px', borderRadius: '6px', textTransform: 'uppercase' }}>
-                        {req.role || 'Senior Staff'}
+                      <span style={{ fontSize: '8px', fontWeight: '900', color: '#3863A8', backgroundColor: '#dbeafe', padding: '1px 4px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                        {isMobile ? (req.role?.includes('Manager') ? 'PM' : req.role) : req.role}
                       </span>
                     )}
                   </div>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-                <div style={{ textAlign: 'right' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '10px' : '30px' }}>
+                <div style={{ textAlign: 'right', display: isMobile ? 'none' : 'block' }}>
                   <p style={{ margin: 0, fontSize: '12px', fontWeight: '800', color: '#0B1E3F' }}>{req.start_date ? String(req.start_date).split('T')[0] : '---'}</p>
                   <p style={{ margin: '2px 0 0', fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>Start Date</p>
                 </div>
-                <div style={{ ...s.badge(req.status), textTransform: 'uppercase' }}>
+                <div style={{ ...s.badge(req.status), textTransform: 'uppercase', fontSize: isMobile ? '9px' : '11px', padding: isMobile ? '4px 8px' : '6px 14px' }}>
                   {String(req.status || 'PENDING').trim()}
                 </div>
               </div>

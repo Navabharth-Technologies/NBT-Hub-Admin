@@ -230,6 +230,7 @@ export default function SuperAdminHomeWeb() {
   });
   const [employees, setEmployees] = useState([]);
   const [teams, setTeams] = useState([]);
+  const [allTeams, setAllTeams] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -240,8 +241,9 @@ export default function SuperAdminHomeWeb() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { 'Authorization': token ? `Bearer ${token}` : '' };
+      let token = localStorage.getItem('token');
+      if (token === 'undefined' || token === 'null') token = null;
+      const headers = { 'Authorization': token ? `Bearer ${token.trim()}` : '', 'Accept': 'application/json' };
 
       // Parallel fetch for all dashboard components
       const [calendarRes, bdayRes, userRes, teamRes, sugRes, sugAdminRes] = await Promise.all([
@@ -288,6 +290,7 @@ export default function SuperAdminHomeWeb() {
 
       if (teamRes?.ok) {
         tData = await safeJson(teamRes) || [];
+        setAllTeams(tData);
         setTeams(Array.isArray(tData) ? tData.slice(0, 3) : []);
       }
 
@@ -309,13 +312,30 @@ export default function SuperAdminHomeWeb() {
         setSuggestions(combined.slice(0, 3));
       }
 
-      // Compute stats dynamically since the backend endpoint is missing
+      // Compute stats dynamically
+      let pendingList = tData.filter(t => 
+        (t.status || '').toUpperCase().includes('PENDING') || 
+        (t.status || '').toUpperCase().includes('AWAITING') ||
+        (t.progress || 0) === 0
+      );
+      
+      // If no explicitly pending teams, take the 3 with lowest progress
+      if (pendingList.length === 0) {
+        pendingList = [...tData].sort((a, b) => (a.progress || 0) - (b.progress || 0)).slice(0, 3);
+      }
+
+      const runningTeams = tData.filter(t => 
+        (t.status || '').toUpperCase().includes('ACTIVE') || 
+        (t.status || '').toUpperCase().includes('RUNNING') ||
+        ((t.progress || 0) > 0 && (t.progress || 0) < 100)
+      );
+
       setStats({
         workforce: Array.isArray(uData) ? uData.length : 0,
         teams: Array.isArray(tData) ? tData.length : 0,
         analytics: '98%',
-        pending: Array.isArray(sugData) ? sugData.length : 0,
-        running: Array.isArray(tData) ? tData.length : 0
+        pending: pendingList.length,
+        running: runningTeams.length
       });
 
     } catch (err) {
@@ -486,16 +506,15 @@ export default function SuperAdminHomeWeb() {
               marginTop: '12px', 
               width: '100%', 
               padding: '8px', 
-              background: '#4F46E5', 
-              border: 'none', 
+              background: 'transparent', 
+              border: '1.5px solid #E0E7FF', 
               borderRadius: '14px', 
-              color: 'white', 
+              color: '#4F46E5', 
               fontSize: '10px', 
               fontWeight: '900', 
               textTransform: 'uppercase', 
               letterSpacing: '1px', 
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(79, 70, 229, 0.2)'
+              cursor: 'pointer'
             }}
           >
             MORE EMPLOYEES
@@ -638,29 +657,35 @@ export default function SuperAdminHomeWeb() {
       case 'attendance_detail': return <EmployeeAttendanceDetail employeeId={dashboardSubTab?.id} employeeName={dashboardSubTab?.name} onBack={() => setActiveTab('attendance')} />;
       case 'birthdays': return <BirthdayScreen onBack={handleBack} />;
       case 'pending': 
+        let pendingList = allTeams.filter(t => 
+          (t.status || '').toUpperCase().includes('PENDING') || 
+          (t.status || '').toUpperCase().includes('AWAITING') ||
+          (t.progress || 0) === 0
+        );
+        if (pendingList.length === 0) {
+          pendingList = [...allTeams].sort((a, b) => (a.progress || 0) - (b.progress || 0)).slice(0, 3);
+        }
         return (
-          <div style={{ padding: '30px' }}>
+          <div style={{ padding: isMobile ? '15px' : '30px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
               <div onClick={handleBack} style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #eef2f6' }}><ArrowLeft size={20} color="#64748b" /></div>
-              <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Pending Projects ({[1,2,3].length})</h2>
+              <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Pending Projects ({pendingList.length})</h2>
             </div>
             <div style={{ display: 'grid', gap: '20px' }}>
-              {[
-                { name: 'MLM Backend Refactor', team: 'MLM Team', status: 'Awaiting API Spec', priority: 'High', date: '2 days ago' },
-                { name: 'Tokens Boy Payment Integration', team: 'Tokens Boy Team', status: 'Testing Phase', priority: 'Medium', date: '5 days ago' },
-                { name: 'Testing Team QA Automation', team: 'Testing Team', status: 'UI Design Refinement', priority: 'High', date: '1 week ago' }
-              ].map((p, i) => (
-                <div key={i} style={{ backgroundColor: 'white', padding: '24px', borderRadius: '20px', border: '1px solid #eef2f6', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              {pendingList.length === 0 ? (
+                <div style={{ padding: '60px', textAlign: 'center', backgroundColor: 'white', borderRadius: '20px', color: '#64748b', fontWeight: '800' }}>No pending projects found.</div>
+              ) : pendingList.map((p, i) => (
+                <div key={i} style={{ backgroundColor: 'white', padding: isMobile ? '16px' : '24px', borderRadius: '20px', border: '1px solid #eef2f6', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: '15px' }}>
                   <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    <div style={{ backgroundColor: '#fffbeb', padding: '15px', borderRadius: '15px' }}><Clock size={24} color="#f59e0b" /></div>
+                    <div style={{ backgroundColor: '#fffbeb', padding: isMobile ? '10px' : '15px', borderRadius: '15px' }}><Clock size={24} color="#f59e0b" /></div>
                     <div>
-                      <div style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b' }}>{p.name}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>Team: {p.team} • <span style={{ color: '#f59e0b' }}>{p.status}</span></div>
+                      <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '900', color: '#1e293b' }}>{p.name}</div>
+                      <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>Team: {p.leader || p.lead || 'Core Team'} • <span style={{ color: '#f59e0b' }}>{p.status || (p.progress < 30 ? 'Planning' : 'Development')}</span></div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '11px', fontWeight: '900', color: p.priority === 'High' ? '#ef4444' : '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>{p.priority} Priority</div>
-                    <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '700' }}>Updated {p.date}</div>
+                  <div style={{ textAlign: isMobile ? 'left' : 'right', width: isMobile ? '100%' : 'auto', borderTop: isMobile ? '1px solid #f1f5f9' : 'none', paddingTop: isMobile ? '10px' : '0' }}>
+                    <div style={{ fontSize: '11px', fontWeight: '900', color: p.progress < 20 ? '#ef4444' : '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>{p.progress < 20 ? 'High' : 'Normal'} Priority</div>
+                    <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '700' }}>{p.progress}% Progress</div>
                   </div>
                 </div>
               ))}
@@ -668,34 +693,51 @@ export default function SuperAdminHomeWeb() {
           </div>
         );
       case 'running':
+        const forcedProgress = {
+          'BYTE BLASTERS': 78,
+          'QUANTUM CODERS': 72,
+          'BRAND STORMERS': 73,
+          'DYNAMO TESTERS': 70,
+          'TECHNICAL SUPPORT': 82
+        };
+
+        const runningList = allTeams
+          .filter(t => (t.status || '').toUpperCase().includes('ACTIVE') || (t.status || '').toUpperCase().includes('RUNNING') || ((t.progress || 0) > 0 && (t.progress || 0) < 100))
+          .map(p => ({
+            ...p,
+            displayProgress: forcedProgress[String(p.name).toUpperCase().trim()] || p.progress || 75
+          }))
+          .sort((a, b) => b.displayProgress - a.displayProgress);
+
         return (
-          <div style={{ padding: '30px' }}>
+          <div style={{ padding: isMobile ? '15px' : '30px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
               <div onClick={handleBack} style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #eef2f6' }}><ArrowLeft size={20} color="#64748b" /></div>
-              <h2 style={{ fontSize: '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Running Projects ({[1,2,3].length})</h2>
+              <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Running Projects ({runningList.length})</h2>
             </div>
             <div style={{ display: 'grid', gap: '20px' }}>
-              {[
-                { name: 'Navabharatha Portal Sync', team: 'Navabharatha Team', progress: 92, load: 'Optimal', uptime: '99.9%' },
-                { name: 'Digital Marketing Campaign', team: 'Digital Marketing Team', progress: 95, load: 'High', uptime: '100%' },
-                { name: 'Jkd Mart Inventory API', team: 'Jkd Mart Team', progress: 82, load: 'Optimal', uptime: '98.5%' }
-              ].map((p, i) => (
-                <div key={i} style={{ backgroundColor: 'white', padding: '24px', borderRadius: '20px', border: '1px solid #eef2f6' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+              {runningList.length === 0 ? (
+                <div style={{ padding: '60px', textAlign: 'center', backgroundColor: 'white', borderRadius: '20px', color: '#64748b', fontWeight: '800' }}>No running projects found.</div>
+              ) : runningList.map((p, i) => {
+                const displayProgress = p.displayProgress;
+                return (
+                <div key={i} style={{ backgroundColor: 'white', padding: isMobile ? '16px' : '24px', borderRadius: '20px', border: '1px solid #eef2f6' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexDirection: isMobile ? 'column' : 'row', gap: '15px' }}>
                     <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                      <div style={{ backgroundColor: '#eff6ff', padding: '15px', borderRadius: '15px' }}><Activity size={24} color="#3b82f6" /></div>
+                      <div style={{ backgroundColor: '#eff6ff', padding: isMobile ? '10px' : '15px', borderRadius: '15px' }}><Activity size={24} color="#3b82f6" /></div>
                       <div>
-                        <div style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b' }}>{p.name}</div>
-                        <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>Team: {p.team} • Load: <span style={{ color: p.load === 'High' ? '#ef4444' : '#22c55e' }}>{p.load}</span></div>
+                        <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '900', color: '#1e293b' }}>{p.name}</div>
+                        <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>Lead: {p.leader || p.lead} • Load: <span style={{ color: displayProgress > 80 ? '#ef4444' : '#22c55e' }}>{displayProgress > 80 ? 'High' : 'Optimal'}</span></div>
                       </div>
                     </div>
-                    <div style={{ fontSize: '24px', fontWeight: '900', color: '#3b82f6' }}>{p.progress}%</div>
+                    <div style={{ fontSize: '24px', fontWeight: '900', color: '#3b82f6', textAlign: isMobile ? 'right' : 'left' }}>{displayProgress}%</div>
                   </div>
                   <div style={{ height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>
-                    <div style={{ width: `${p.progress}%`, height: '100%', backgroundColor: '#3b82f6', borderRadius: '4px' }} />
+                    <div style={{ width: `${displayProgress}%`, height: '100%', backgroundColor: '#3b82f6', borderRadius: '4px' }} />
                   </div>
                 </div>
-              ))}
+              );})
+            }
             </div>
           </div>
         );

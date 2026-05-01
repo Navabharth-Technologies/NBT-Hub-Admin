@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from './AuthContext';
 import { 
-  Globe, User, 
+  Mail, User, 
   Calendar, 
   Users, Edit3, Fingerprint, Camera, Phone, Check, Send, Database, ArrowLeft
 } from 'lucide-react';
@@ -48,12 +48,13 @@ export default function ProfileScreen({ onBack }) {
   useEffect(() => {
     const fetchFullProfile = async () => {
        if (!user?.email) return;
-       try {
-         const token = user?.token || localStorage.getItem('token');
-         if (!token) return;
-         const response = await fetch(API_ENDPOINTS.PROFILE(user.email), {
-             headers: { 'Authorization': `Bearer ${token}` }
-         });
+        try {
+          const rawToken = user?.token || localStorage.getItem('token');
+          const token = String(rawToken || '').trim();
+          if (!token || token === 'undefined' || token === 'null') return;
+          const response = await fetch(API_ENDPOINTS.PROFILE(user.email), {
+              headers: { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json' }
+          });
          if (response.ok) {
             const data = await response.json();
             if (data.name) setName(data.name);
@@ -137,13 +138,15 @@ export default function ProfileScreen({ onBack }) {
 
      console.log(`Sending ${type} to backend:`, payload);
 
-     const token = user?.token || localStorage.getItem('token');
+     const rawToken = user?.token || localStorage.getItem('token');
+     const token = String(rawToken || '').trim();
      try {
         const res = await fetch(API_ENDPOINTS.PROFILE_UPDATE, {
            method: 'PUT',
            headers: {
              'Content-Type': 'application/json',
-             'Authorization': token ? `Bearer ${token}` : ''
+             'Authorization': token && token !== 'undefined' && token !== 'null' ? `Bearer ${token}` : '',
+             'Accept': 'application/json'
            },
            body: JSON.stringify(payload)
         });
@@ -164,30 +167,6 @@ export default function ProfileScreen({ onBack }) {
      const file = e.target.files[0];
      if (!file) return;
 
-     const token = user?.token || localStorage.getItem('token');
-
-     // Compress image using canvas before uploading (keeps under 1MB body limit)
-     const compressImage = (file, maxWidthPx = 800, quality = 0.7) => {
-        return new Promise((resolve) => {
-           const img = new Image();
-           const objectUrl = URL.createObjectURL(file);
-           img.onload = () => {
-              const canvas = document.createElement('canvas');
-              let { width, height } = img;
-              if (width > maxWidthPx) {
-                 height = Math.round((height * maxWidthPx) / width);
-                 width = maxWidthPx;
-              }
-              canvas.width = width;
-              canvas.height = height;
-              canvas.getContext('2d').drawImage(img, 0, 0, width, height);
-              URL.revokeObjectURL(objectUrl);
-              resolve(canvas.toDataURL('image/jpeg', quality));
-           };
-           img.src = objectUrl;
-        });
-     };
-
      // 1. Show immediate full preview
      const rawReader = new FileReader();
      rawReader.onloadend = () => setProfileImage(rawReader.result);
@@ -195,15 +174,39 @@ export default function ProfileScreen({ onBack }) {
 
      // 2. Compress and upload
      try {
+        const compressImage = (file, maxWidthPx = 800, quality = 0.7) => {
+           return new Promise((resolve) => {
+              const img = new Image();
+              const objectUrl = URL.createObjectURL(file);
+              img.onload = () => {
+                 const canvas = document.createElement('canvas');
+                 let { width, height } = img;
+                 if (width > maxWidthPx) {
+                    height = Math.round((height * maxWidthPx) / width);
+                    width = maxWidthPx;
+                 }
+                 canvas.width = width;
+                 canvas.height = height;
+                 canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                 URL.revokeObjectURL(objectUrl);
+                 resolve(canvas.toDataURL('image/jpeg', quality));
+              };
+              img.src = objectUrl;
+           });
+        };
+
         const compressed = await compressImage(file);
         saveLocalProfile({ profile_image: compressed });
 
-        const response = await fetch(API_ENDPOINTS.PROFILE_UPDATE, {
-            method: 'PUT',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': token ? `Bearer ${token}` : ''
-            },
+         const rawToken = user?.token || localStorage.getItem('token');
+         const token = String(rawToken || '').trim();
+         const response = await fetch(API_ENDPOINTS.PROFILE_UPDATE, {
+             method: 'PUT',
+             headers: {
+                 'Content-Type': 'application/json',
+                 'Authorization': token && token !== 'undefined' && token !== 'null' ? `Bearer ${token}` : '',
+                 'Accept': 'application/json'
+             },
             body: JSON.stringify({
                 profile_image: compressed,
                 profile_picture: compressed,
@@ -237,167 +240,114 @@ export default function ProfileScreen({ onBack }) {
   const isSmallMobile = winWidth < 480;
 
   const styles = {
-    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingTop: isMobile ? '30px' : '0', paddingBottom: isMobile ? '160px' : '60px', fontFamily: 'system-ui, -apple-system, sans-serif' },
-    profileWrapper: { maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '12px' : '20px' },
-    banner: { height: isMobile ? '140px' : '200px', backgroundColor: '#3863a8', borderRadius: '25px', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', margin: isMobile ? '0 5px' : '0' },
-    bannerText: { color: 'rgba(255,255,255,0.8)', fontSize: isMobile ? '14px' : '32px', fontWeight: '400', letterSpacing: '1px', textAlign: 'center', padding: '0 20px', lineHeight: '1.4' },
-    masterCard: { backgroundColor: 'white', borderRadius: '25px', boxShadow: '0 10px 30px rgba(0,0,0,0.08)', padding: isMobile ? '20px' : '40px', position: 'relative', marginTop: isMobile ? '-50px' : '-60px' },
-    headerRow: { display: 'flex', flexDirection: 'column', alignItems: 'center', paddingBottom: '30px', borderBottom: '1px solid #f1f5f9', gap: '15px', textAlign: 'center' },
-    avatarContainer: { position: 'relative', zIndex: 10, marginBottom: '5px' },
-    avatar: { width: isMobile ? '90px' : '140px', height: isMobile ? '90px' : '140px', borderRadius: '22px', backgroundColor: '#f8fafc', border: '4px solid white', boxShadow: '0 8px 24px rgba(0,0,0,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: isMobile ? '32px' : '52px', color: '#3863a8', fontWeight: '800', overflow: 'hidden' },
-    editAvatarBtn: { position: 'absolute', bottom: '-5px', right: '-5px', backgroundColor: 'white', width: '32px', height: '32px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)', cursor: 'pointer', border: 'none', color: '#3863a8' },
-    userInfo: { flex: 1, display: 'flex', flexDirection: 'column', gap: '10px', alignItems: 'center' },
-    userName: { fontSize: isMobile ? '22px' : '28px', fontWeight: '900', color: '#0f172a', margin: '0', letterSpacing: '-0.5px' },
-    userRole: { fontSize: '11px', color: '#3863a8', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '5px' },
-    managerSection: { display: 'flex', alignItems: 'center', gap: '15px', padding: '15px 25px', backgroundColor: '#f8fafc', borderRadius: '20px', border: '1px solid #f1f5f9', marginTop: '10px', width: isMobile ? '100vw' : 'auto', maxWidth: isMobile ? 'calc(100% + 40px)' : 'none', marginLeft: isMobile ? '-20px' : '0', boxSizing: 'border-box' },
-    managerInfo: { textAlign: isMobile ? 'center' : 'right', flex: 1 },
-    managerLabel: { fontSize: '10px', color: '#94a3b8', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.8px' },
-    managerName: { fontSize: '14px', color: '#1e293b', fontWeight: '800' },
-    managerAvatar: { width: '42px', height: '42px', borderRadius: '50%', backgroundColor: '#e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
-    infoGrid: { display: 'grid', gridTemplateColumns: '1fr', gap: '15px', marginTop: '30px' },
-    infoCard: { backgroundColor: 'white', padding: '20px', borderRadius: '20px', border: '1px solid #f1f5f9', display: 'flex', alignItems: 'center', gap: '15px', boxShadow: '0 4px 15px rgba(0,0,0,0.03)', overflow: 'hidden' },
-    iconCircle: { minWidth: '46px', height: '46px', borderRadius: '14px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#3863A8' },
-    infoValue: { fontSize: isSmallMobile ? '13px' : '15px', color: '#1e293b', fontWeight: '900', marginTop: '4px', wordBreak: 'break-all' },
-    aboutSection: { marginTop: '30px', backgroundColor: 'white', padding: '25px', borderRadius: '25px', border: '1px solid #f1f5f9', boxShadow: '0 4px 15px rgba(0,0,0,0.02)' },
-    sectionTitle: { fontSize: '16px', fontWeight: '900', color: '#1e293b', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }
+    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '100px', fontFamily: 'system-ui, -apple-system, sans-serif' },
+    profileWrapper: { maxWidth: '1200px', margin: '0 auto', padding: '0 20px' },
+    banner: { height: '160px', backgroundColor: '#0B1E3F', borderRadius: '0 0 24px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    bannerText: { color: '#FFFFFF', fontSize: '13px', fontWeight: '800', letterSpacing: '0.5px', textAlign: 'center' },
+    masterCard: { backgroundColor: 'white', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', padding: '35px', position: 'relative', marginTop: '-40px', border: '1px solid #F1F5F9' },
+    headerRow: { display: 'flex', justifyContent: 'flex-start', alignItems: 'center', flexWrap: 'wrap', gap: '60px', paddingBottom: '25px' },
+    avatarContainer: { position: 'relative' },
+    avatar: { width: '80px', height: '80px', borderRadius: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', color: '#2563EB', fontWeight: '800', overflow: 'hidden' },
+    editAvatarBtn: { position: 'absolute', bottom: '-5px', right: '-5px', backgroundColor: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1px solid #e2e8f0', color: '#64748b' },
+    userName: { fontSize: '20px', fontWeight: '1000', color: '#0B1E3F', margin: '0' },
+    userRole: { fontSize: '10px', color: '#2563EB', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' },
+    managerBox: { backgroundColor: '#F8FAFC', padding: '10px 15px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px' },
+    managerLabel: { fontSize: '9px', color: '#94A3B8', fontWeight: '800', textTransform: 'uppercase' },
+    managerName: { fontSize: '12px', color: '#0B1E3F', fontWeight: '900' },
+    infoGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(3, 1fr)', gap: '15px', marginTop: '20px' },
+    infoCard: { backgroundColor: 'white', padding: '25px', borderRadius: '20px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '20px', transition: 'transform 0.2s' },
+    iconCircle: { width: '50px', height: '50px', borderRadius: '15px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB' },
+    label: { fontSize: '10px', color: '#94A3B8', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '1px' },
+    value: { fontSize: '15px', color: '#0B1E3F', fontWeight: '1000', marginTop: '4px' },
+    aboutSection: { marginTop: '30px', backgroundColor: '#F8FAFC', padding: '30px', borderRadius: '24px', border: '1px solid #F1F5F9' },
+    logoutBtn: { marginTop: '50px', padding: '15px 60px', borderRadius: '16px', border: '2px solid #EF4444', backgroundColor: 'white', color: '#EF4444', fontSize: '14px', fontWeight: '1000', cursor: 'pointer', display: 'block', margin: '50px auto 0', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)' }
   };
 
-  if (!isMobile) {
-    styles.headerRow.flexDirection = 'row';
-    styles.headerRow.textAlign = 'left';
-    styles.headerRow.alignItems = 'flex-end';
-    styles.headerRow.marginTop = '-40px';
-    styles.managerSection.marginTop = '0';
-    styles.managerInfo.textAlign = 'right';
-    styles.infoGrid.gridTemplateColumns = 'repeat(2, 1fr)';
-  }
+
 
   return (
     <div style={styles.container}>
       <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageChange} />
 
       <div style={styles.profileWrapper}>
-        
-        {/* BACK BUTTON TOP BAR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
-          {onBack && (
-            <div 
-              onClick={onBack} 
-              style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #eef2f6' }}
-            >
-              <ArrowLeft size={20} color="#64748b" />
-            </div>
-          )}
-          <h2 style={{ fontSize: '18px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Administrator Profile</h2>
-        </div>
-
-        <div style={{ ...styles.banner, position: 'relative' }}>
-          {profileImage && (
-            <img 
-              src={profileImage} 
-              alt="Banner Background" 
-              style={{ 
-                position: 'absolute', 
-                top: 0, 
-                left: 0, 
-                width: '100%', 
-                height: '100%', 
-                objectFit: 'cover', 
-                opacity: 0.4, // Subtitle background effect
-                filter: 'blur(2px)' // Slight blur for readability
-              }} 
-            />
-          )}
-          <div style={{ ...styles.bannerText, position: 'relative', zIndex: 1 }}>Smarter Solutions for Better Future</div>
+        {onBack && (
+          <div 
+            onClick={onBack} 
+            style={{ cursor: 'pointer', backgroundColor: 'white', width: '40px', height: '40px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f1f5f9', marginBottom: '15px' }}
+          >
+            <ArrowLeft size={20} color="#0B1E3F" />
+          </div>
+        )}
+        <div style={styles.banner}>
+          <div style={styles.bannerText}>Smarter solutions for better future</div>
         </div>
 
         <div style={styles.masterCard}>
-          <div style={{ ...styles.headerRow, justifyContent: isMobile ? 'center' : 'space-between', alignItems: isMobile ? 'center' : 'center' }}>
-            <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', alignItems: 'center', gap: '20px', textAlign: isMobile ? 'center' : 'left' }}>
+          <div style={styles.headerRow}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
               <div style={styles.avatarContainer}>
                 <div style={styles.avatar}>
                   {profileImage ? <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (user?.name ? user.name[0] : 'S')}
                 </div>
-                <button onClick={() => fileInputRef.current?.click()} style={styles.editAvatarBtn}><Camera size={16} /></button>
+                <button onClick={() => fileInputRef.current?.click()} style={styles.editAvatarBtn}><Camera size={12} /></button>
               </div>
-
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+              <div style={{ minWidth: '180px' }}>
                 <div style={styles.userName}>{name}</div>
-                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: isMobile ? '8px' : '15px', alignItems: isMobile ? 'center' : 'center' }}>
-                  <div style={styles.userRole}>{role}</div>
-                  {!isMobile && <span style={{ color: '#cbd5e1' }}>•</span>}
-                  
-                  {/* PHONE */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Phone size={14} color="#64748b" />
-                    {isEditingPhone ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <input autoFocus style={{ border: 'none', borderBottom: '2px solid #3863a8', fontSize: '13px', fontWeight: '800', outline: 'none', width: '100px' }} value={phone} onChange={(e) => setPhone(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setIsEditingPhone(false); syncProfileUpdate('phone', phone); } }} />
-                        <button onClick={() => { setIsEditingPhone(false); syncProfileUpdate('phone', phone); }} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50', backgroundColor: '#dcfce7', display: 'flex'}}><Check size={12} color="#166534" /></button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>{phone || 'Add Phone Number'}</span>
-                        <button onClick={() => setIsEditingPhone(true)} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '2px', borderRadius: '50%', backgroundColor: '#f8fafc', display: 'flex'}}><Edit3 size={11} color="#94a3b8" /></button>
-                      </div>
-                    )}
-                  </div>
-                  {!isMobile && <span style={{ color: '#cbd5e1' }}>•</span>}
-
-                  {/* DOB */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <Calendar size={14} color="#64748b" />
-                    {isEditingDob ? (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                        <input autoFocus style={{ border: 'none', borderBottom: '2px solid #3863a8', fontSize: '13px', fontWeight: '800', outline: 'none', width: '100px' }} value={dob} onChange={(e) => setDob(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') { setIsEditingDob(false); syncProfileUpdate('dob', dob); } }} />
-                        <button onClick={() => { setIsEditingDob(false); syncProfileUpdate('dob', dob); }} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '4px', borderRadius: '50', backgroundColor: '#dcfce7', display: 'flex'}}><Check size={12} color="#166534" /></button>
-                      </div>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '13px', fontWeight: '600', color: '#64748b' }}>{dob}</span>
-                        <button onClick={() => setIsEditingDob(true)} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '2px', borderRadius: '50%', backgroundColor: '#f8fafc', display: 'flex'}}><Edit3 size={11} color="#94a3b8" /></button>
-                      </div>
-                    )}
-                  </div>
-                </div>
+                <div style={styles.userRole}>{role}</div>
               </div>
             </div>
 
-            {/* Reporting Manager section removed per request */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Phone size={16} /></div>
+              <div>
+                <div style={styles.label}>Contact Number</div>
+                <div style={{ ...styles.value, fontSize: '13px', marginTop: '0' }}>{phone}</div>
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Calendar size={16} /></div>
+              <div>
+                <div style={styles.label}>Date of Birth</div>
+                <div style={{ ...styles.value, fontSize: '13px', marginTop: '0' }}>{dob}</div>
+              </div>
+            </div>
           </div>
 
           <div style={styles.infoGrid}>
             <div style={styles.infoCard}>
-              <div style={styles.iconCircle}><Fingerprint size={20} /></div>
-              <div style={{ flex: 1 }}>
-                <div style={styles.managerLabel}>Employee ID</div>
-                <div style={styles.infoValue}>{employeeId}</div>
+              <div style={styles.iconCircle}><Users size={18} /></div>
+              <div>
+                <div style={styles.label}>Team</div>
+                <div style={styles.value}>{team}</div>
               </div>
             </div>
             <div style={styles.infoCard}>
-              <div style={styles.iconCircle}><Globe size={20} /></div>
-              <div style={{ flex: 1, overflow: 'hidden' }}>
-                <div style={styles.managerLabel}>Email Address</div>
-                <div style={styles.infoValue}>{user?.email || 'N/A'}</div>
+              <div style={styles.iconCircle}><Mail size={18} /></div>
+              <div>
+                <div style={styles.label}>Email Address</div>
+                <div style={{ ...styles.value, fontSize: '12px' }}>{user?.email || 'dinesh@navabharathtechnologies.com'}</div>
+              </div>
+            </div>
+            <div style={styles.infoCard}>
+              <div style={styles.iconCircle}><Calendar size={18} /></div>
+              <div>
+                <div style={styles.label}>Date of Joining</div>
+                <div style={styles.value}>10 November 2023</div>
               </div>
             </div>
           </div>
 
-
           <div style={styles.aboutSection}>
-            <div style={styles.sectionTitle}>
-               About Me
-               {isEditingAbout ? (
-                 <button onClick={() => { setIsEditingAbout(false); syncProfileUpdate('aboutMe', aboutMe); }} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '50%', backgroundColor: '#dcfce7', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', fontWeight: 'bold', color: '#166534'}}><Check size={14} /> Save</button>
-               ) : (
-                 <button onClick={() => setIsEditingAbout(true)} style={{background: 'none', border: 'none', cursor: 'pointer', padding: '6px', borderRadius: '50%', backgroundColor: '#f1f5f9', display: 'flex'}}><Edit3 size={14} /></button>
-               )}
+            <div style={{ ...styles.label, marginBottom: '10px', fontSize: '12px', color: '#0B1E3F' }}>About me</div>
+            <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>
+              {aboutMe}
             </div>
-            {isEditingAbout ? (
-              <textarea autoFocus style={{ width: '100%', height: '80px', padding: '12px', borderRadius: '12px', border: '1px solid #e2e8f0', outlineColor: '#3863A8', fontSize: '13px' }} value={aboutMe} onChange={(e) => setAboutMe(e.target.value)} />
-            ) : (<div style={{ fontSize: '13px', color: '#475569', lineHeight: '1.6' }}>{aboutMe}</div>)}
           </div>
 
+          <button style={styles.logoutBtn} onClick={() => { if (window.confirm('Securely end this session?')) window.location.reload(); }}>
+            Logout Securely
+          </button>
         </div>
       </div>
     </div>

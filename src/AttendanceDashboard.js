@@ -62,15 +62,21 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
       } catch(e) {}
       // Fallbacks
       if (!token) token = user?.token;
-      if (!token) token = localStorage.getItem('token');
+      const cleanToken = String(token || localStorage.getItem('token') || '').trim();
 
-      if (!token) {
+      const headers = { 
+        'Accept': 'application/json',
+        'Content-Type': 'application/json',
+        'Authorization': cleanToken && cleanToken !== 'undefined' && cleanToken !== 'null' ? `Bearer ${cleanToken}` : ''
+      };
+
+      if (!cleanToken || cleanToken === 'undefined' || cleanToken === 'null') {
         addLog('No auth token found. Please re-login.', 'error');
         setLoading(false);
         return;
       }
 
-      const headers = { 'Authorization': `Bearer ${token}`, 'Accept': 'application/json', 'Content-Type': 'application/json' };
+
       const BASE = BASE_URL; // Use global config BASE_URL instead of hardcoded IP
 
       // Step 1: Get all users (email + name) for mapping, skip Dinesh
@@ -414,30 +420,29 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
 
 
         {/* Small Summary Boxes below Title */}
-        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '16px', marginBottom: '30px', alignItems: isMobile ? 'flex-start' : 'center' }}>
-          <div style={{ display: 'flex', gap: '16px', flexWrap: 'wrap' }}>
-            <div style={{ backgroundColor: 'white', padding: '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ backgroundColor: '#F0FDF4', padding: '6px', borderRadius: '8px' }}><FileText size={16} color="#10B981" /></div>
-              <div>
-                <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>TOTAL LOGS</div>
-                <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#0B1E3F' }}>{metrics.totalLogs}</div>
-              </div>
-            </div>
-            <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ backgroundColor: '#EFF6FF', padding: '6px', borderRadius: '8px' }}><UserCheck size={16} color="#3B82F6" /></div>
-              <div>
-                <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>PRESENT</div>
-                <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#3B82F6' }}>{metrics.present}</div>
-              </div>
-            </div>
-            <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ backgroundColor: '#FEF2F2', padding: '6px', borderRadius: '8px' }}><LogOut size={16} color="#EF4444" /></div>
-              <div>
-                <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>ABSENT</div>
-                <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#EF4444' }}>{metrics.absent}</div>
-              </div>
+        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '16px', marginBottom: '30px' }}>
+          <div style={{ backgroundColor: 'white', padding: isMobile ? '12px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ backgroundColor: '#F0FDF4', padding: '6px', borderRadius: '8px' }}><FileText size={16} color="#10B981" /></div>
+            <div>
+              <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>LOGS</div>
+              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#0B1E3F' }}>{metrics.totalLogs}</div>
             </div>
           </div>
+          <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ backgroundColor: '#EFF6FF', padding: '6px', borderRadius: '8px' }}><UserCheck size={16} color="#3B82F6" /></div>
+            <div>
+              <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>PRESENT</div>
+              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#3B82F6' }}>{metrics.present}</div>
+            </div>
+          </div>
+          <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px', gridColumn: isMobile ? 'span 2' : 'auto' }}>
+            <div style={{ backgroundColor: '#FEF2F2', padding: '6px', borderRadius: '8px' }}><LogOut size={16} color="#EF4444" /></div>
+            <div>
+              <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>ABSENT</div>
+              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#EF4444' }}>{metrics.absent}</div>
+            </div>
+          </div>
+        </div>
 
           {!isMobile && <div style={{ flex: 1 }} />}
 
@@ -486,22 +491,21 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
               {showAll ? 'Show Less' : 'View All Workforce'}
             </button>
           </div>
-        </div>
 
         {/* Clean Table Section */}
         <div style={{ backgroundColor: 'white', borderRadius: '24px', border: '1.5px solid #F1F5F9', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
           <table style={styles.table}>
             <thead>
               <tr style={{ borderBottom: '1.5px solid #F8FAFC' }}>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>EMPLOYEE</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>EMPLOYEE ID</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>DATE</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>IN TIME</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>OUT TIME</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>WORKING HOURS</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>STATUS</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>IN LOCATION</th>
-                <th style={{ ...styles.th, padding: '20px 24px' }}>OUT LOCATION</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>EMPLOYEE</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>EMPLOYEE ID</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>DATE</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>IN TIME</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>OUT TIME</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>WORKING HOURS</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>STATUS</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>IN LOCATION</th>
+                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>OUT LOCATION</th>
               </tr>
             </thead>
             <tbody>
@@ -524,43 +528,43 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
                       onMouseOver={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
                       onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      <td style={{ ...styles.td, padding: '20px 24px' }}>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '20px 24px' }}>
                         <div style={styles.empCell}>
                           <div style={styles.avatar}>{(log.EmployeeName || 'E').charAt(0)}</div>
                           <div>
-                            <div style={{ ...styles.empName, color: '#2563EB', textDecoration: 'underline', textUnderlineOffset: '3px' }}>
+                            <div style={{ ...styles.empName, color: '#2563EB', textDecoration: 'underline', textUnderlineOffset: '3px', whiteSpace: 'nowrap' }}>
                               {log.EmployeeName}
                             </div>
                             <div style={styles.empRole}>{log.remark || 'Staff Member'}</div>
                           </div>
                         </div>
                       </td>
-                      <td style={{ ...styles.td, padding: '18px 24px', fontWeight: '800', color: '#64748B', fontSize: '13px' }}>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', fontWeight: '800', color: '#64748B', fontSize: isMobile ? '11px' : '13px' }}>
                         {log.user_id || log.Empcode}
                       </td>
-                      <td style={{ ...styles.td, padding: '18px 24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700', fontSize: '12px' }}>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700', fontSize: isMobile ? '10px' : '12px', whiteSpace: 'nowrap' }}>
                           <Calendar size={14} color="#CBD5E1" />
                           {formatLongDate(log.punch_date || log.date)}
                         </div>
                       </td>
-                      <td style={{ ...styles.td, padding: '18px 24px', color: '#3B82F6', fontWeight: '800' }}>
-                        {log.in_time || log.punch_in || log.check_in || '--:--'}
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#3B82F6', fontWeight: '800', fontSize: isMobile ? '11px' : '13px' }}>
+                        {log.in_time || log.punch_in || '--:--'}
                       </td>
-                      <td style={{ ...styles.td, padding: '18px 24px', color: '#64748B', fontWeight: '700' }}>
-                        {log.out_time || log.punch_out || log.check_out || '--:--'}
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontWeight: '700', fontSize: isMobile ? '11px' : '13px' }}>
+                        {log.out_time || log.punch_out || '--:--'}
                       </td>
-                      <td style={{ ...styles.td, padding: '18px 24px', fontWeight: '900', color: '#0F172A' }}>
-                        {log.work_hrs || log.work_time || log.work_hours || '00:00'} <span style={{ fontSize: '9px', color: '#94A3B8' }}>HOURS</span>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', fontWeight: '900', color: '#0F172A', fontSize: isMobile ? '11px' : '13px' }}>
+                        {log.work_hrs || log.work_time || '00:00'} <span style={{ fontSize: '9px', color: '#94A3B8' }}>HOURS</span>
                       </td>
-                      <td style={{ ...styles.td, padding: '18px 24px' }}>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px' }}>
                         <div style={{ ...styles.statusBadge(bg, color), padding: '4px 10px' }}>
                           <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: color }}></div>
                           {status}
                         </div>
                       </td>
-                      <td style={{ ...styles.td, padding: '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600' }}>{log.punch_in_location || '---'}</td>
-                      <td style={{ ...styles.td, padding: '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600' }}>{log.punch_out_location || '---'}</td>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>{log.punch_in_location || '---'}</td>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>{log.punch_out_location || '---'}</td>
                     </tr>
                   );
                 })

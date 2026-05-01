@@ -44,7 +44,7 @@ export default function LoginScreen() {
       display: 'block'
     },
     title: { fontSize: '36px', fontWeight: '900', color: '#1e293b', marginBottom: '8px', letterSpacing: '-1.5px' },
-    subtitle: { fontSize: '15px', color: '#64748b', marginBottom: '45px', fontWeight: '800', letterSpacing: '0.5px' },
+    subtitle: { fontSize: '12px', color: '#64748b', marginBottom: '45px', fontWeight: '900', letterSpacing: '1px', textTransform: 'uppercase' },
 
     label: { fontSize: '11px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '2px', textAlign: 'left', display: 'block', marginBottom: '10px' },
     inputGroup: { marginBottom: '25px' },
@@ -74,7 +74,7 @@ export default function LoginScreen() {
       <div style={styles.card}>
         <img src={loginLogo} alt="NBT Logo" style={styles.logo} />
         <h1 style={styles.title}>NBT Hub</h1>
-        <p style={styles.subtitle}>smarter solutions for better future</p>
+        <p style={styles.subtitle}>Smarter Solutions for Better Future</p>
 
         <div style={styles.inputGroup}>
           <label style={styles.label}>Official Identity (Email)</label>

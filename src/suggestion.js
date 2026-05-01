@@ -9,7 +9,9 @@ export default function SuggestionDashboard({ onBack }) {
 
   useEffect(() => {
     const fetchSuggestions = async () => {
-      const token = user?.token || localStorage.getItem('token');
+      let token = user?.token || localStorage.getItem('token');
+      if (token === 'undefined' || token === 'null') token = null;
+      
       console.log('Fetching suggestions with token:', token ? 'Present' : 'Missing');
       
       if (!token) {
@@ -22,8 +24,8 @@ export default function SuggestionDashboard({ onBack }) {
         console.log('Hitting endpoints:', API_ENDPOINTS.SUGGESTIONS, API_ENDPOINTS.SUGGESTIONS_ADMIN);
         
         const [res1, res2] = await Promise.allSettled([
-          fetch(API_ENDPOINTS.SUGGESTIONS, { headers: { 'Authorization': `Bearer ${token}` } }),
-          fetch(API_ENDPOINTS.SUGGESTIONS_ADMIN, { headers: { 'Authorization': `Bearer ${token}` } })
+          fetch(API_ENDPOINTS.SUGGESTIONS, { headers: { 'Authorization': `Bearer ${token?.trim()}`, 'Accept': 'application/json' } }),
+          fetch(API_ENDPOINTS.SUGGESTIONS_ADMIN, { headers: { 'Authorization': `Bearer ${token?.trim()}`, 'Accept': 'application/json' } })
         ]);
 
         let combinedData = [];
