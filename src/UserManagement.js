@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Search, Mail, Fingerprint, MapPin, ChevronRight, Activity, ArrowLeft } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { API_ENDPOINTS } from './config';
 
 export default function UserManagement({ onBack }) {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUserId, setSelectedUserId] = useState(null);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -96,20 +98,22 @@ export default function UserManagement({ onBack }) {
     grid: { 
       display: 'grid', 
       gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', 
-      gap: '24px' 
+      gap: '24px',
+      position: 'relative'
     },
-    card: { 
+    card: (isSelected) => ({ 
       backgroundColor: 'white', 
       borderRadius: '20px', 
       padding: '24px', 
       display: 'flex', 
       flexDirection: 'column', 
       gap: '16px',
-      boxShadow: '0 8px 20px rgba(49,90,158,0.06)',
-      border: '2px solid #bfdbfe',
-      transition: 'transform 0.2s, box-shadow 0.2s',
-      cursor: 'pointer'
-    },
+      boxShadow: isSelected ? '0 30px 60px rgba(49,90,158,0.2)' : '0 8px 20px rgba(49,90,158,0.06)',
+      border: isSelected ? '3px solid #315A9E' : '2px solid #bfdbfe',
+      cursor: 'pointer',
+      position: 'relative',
+      zIndex: isSelected ? 100 : 1
+    }),
     cardHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' },
     avatar: { 
       width: '48px', 
@@ -155,7 +159,7 @@ export default function UserManagement({ onBack }) {
   };
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} onClick={() => setSelectedUserId(null)}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
         {onBack && (
           <div 
@@ -166,7 +170,7 @@ export default function UserManagement({ onBack }) {
           </div>
         )}
         <div>
-          <h1 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Workforce Directory</h1>
+          <h1 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Employees</h1>
           <div style={{ fontSize: '11px', color: '#64748B', fontWeight: '700', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
             <MapPin size={12} color="#10B981" /> 
             NAVABHARATH TECHNOLOGIES, 2nd Floor, 667/B, Chitrabhanu Road, Kuvempu Nagara, Mysuru, Karnataka 570023
@@ -181,9 +185,10 @@ export default function UserManagement({ onBack }) {
             placeholder="Search by name, role, or team..." 
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
-        {!isMobile && <button style={styles.filterBtn}>Departments <ChevronRight size={14} /></button>}
+        {!isMobile && <button style={styles.filterBtn} onClick={(e) => e.stopPropagation()}>Departments <ChevronRight size={14} /></button>}
       </div>
 
       {loading ? (
@@ -191,7 +196,17 @@ export default function UserManagement({ onBack }) {
       ) : (
         <div style={styles.grid}>
           {filteredUsers.map(user => (
-            <div key={user.id} style={styles.card} onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-5px)'; e.currentTarget.style.boxShadow = '0 20px 40px rgba(0,0,0,0.08)'; }} onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 10px 30px rgba(0,0,0,0.04)'; }}>
+            <motion.div 
+              key={user.id} 
+              layout
+              onClick={(e) => { e.stopPropagation(); setSelectedUserId(selectedUserId === user.id ? null : user.id); }}
+              animate={{ 
+                scale: selectedUserId === user.id ? 1.08 : 1,
+                zIndex: selectedUserId === user.id ? 50 : 1,
+              }}
+              transition={{ type: "spring", stiffness: 300, damping: 25 }}
+              style={styles.card(selectedUserId === user.id)}
+            >
               <div style={styles.cardHeader}>
                 <div style={styles.avatar}>{user.name[0]}</div>
                 <span style={styles.status}>ACTIVE</span>
@@ -207,9 +222,7 @@ export default function UserManagement({ onBack }) {
                 <div style={styles.detailRow}><Mail size={14} style={styles.detailIcon} /><span style={styles.detailText}>{user.email}</span></div>
                 <div style={styles.detailRow}><Fingerprint size={14} style={styles.detailIcon} /><span style={styles.detailText}>{user.id}</span></div>
               </div>
-
-
-            </div>
+            </motion.div>
           ))}
         </div>
       )}

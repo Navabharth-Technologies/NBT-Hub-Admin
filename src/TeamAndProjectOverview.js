@@ -351,9 +351,7 @@ export default function TeamAndProjectOverview({ onBack }) {
                 </div>
               )}
 
-              <div style={styles.footer}>
-                <span style={styles.footerLink}>{isZoomed ? 'Hide Team Roster \u2191' : 'View Team Roster \u2192'}</span>
-              </div>
+
             </div>
             );
           })}
