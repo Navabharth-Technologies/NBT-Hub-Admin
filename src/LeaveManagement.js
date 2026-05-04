@@ -14,6 +14,7 @@ export default function LeaveManagement({ onBack }) {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [adminRemarks, setAdminRemarks] = useState('');
   const [winWidth, setWinWidth] = useState(window.innerWidth);
+  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
   const isMobile = winWidth < 768;
 
   useEffect(() => {
@@ -223,6 +224,12 @@ export default function LeaveManagement({ onBack }) {
       // History should ONLY show completed (Approved/Rejected) requests
       return matchesSearch && !isPending;
     }
+    if (activeTab === 'EMPLOYEE_LEAVES') {
+      const targetDate = filterDate;
+      const start = req.start_date ? String(req.start_date).split('T')[0] : '';
+      const end = req.end_date ? String(req.end_date).split('T')[0] : start;
+      return matchesSearch && start <= targetDate && end >= targetDate;
+    }
     return matchesSearch;
   });
 
@@ -339,6 +346,7 @@ export default function LeaveManagement({ onBack }) {
       <div style={s.tabs}>
         <div style={s.tab(activeTab === 'PENDING')} onClick={() => setActiveTab('PENDING')}>Pending Requests</div>
         <div style={s.tab(activeTab === 'HISTORY')} onClick={() => setActiveTab('HISTORY')}>Leave History</div>
+        <div style={s.tab(activeTab === 'EMPLOYEE_LEAVES')} onClick={() => setActiveTab('EMPLOYEE_LEAVES')}>Employee Leave</div>
       </div>
 
       <div style={s.searchContainer}>
@@ -351,6 +359,14 @@ export default function LeaveManagement({ onBack }) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
+        {activeTab === 'EMPLOYEE_LEAVES' && (
+          <input 
+            type="date"
+            value={filterDate}
+            onChange={(e) => setFilterDate(e.target.value)}
+            style={{ ...s.searchInput, flex: 'none', width: 'auto' }}
+          />
+        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -358,7 +374,7 @@ export default function LeaveManagement({ onBack }) {
           <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>Synchronizing Leave Database...</div>
         ) : filteredRequests.length === 0 ? (
           <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>No leave requests found.</div>
-        ) : activeTab === 'HISTORY' ? (
+        ) : (activeTab === 'HISTORY' || activeTab === 'EMPLOYEE_LEAVES') ? (
           <div style={{ backgroundColor: 'white', borderRadius: '25px', overflowX: 'auto', border: '1.5px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
             <table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1.5px solid #f1f5f9' }}>

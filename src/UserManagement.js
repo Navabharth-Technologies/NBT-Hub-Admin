@@ -53,7 +53,7 @@ export default function UserManagement({ onBack }) {
   );
 
   const styles = {
-    container: { fontFamily: 'system-ui, -apple-system, sans-serif' },
+    container: { fontFamily: 'system-ui, -apple-system, sans-serif', padding: isMobile ? '20px' : '40px', backgroundColor: '#F8FAFC', minHeight: '100vh', boxSizing: 'border-box' },
     searchBarContainer: { 
       display: 'flex', 
       gap: '15px', 

@@ -6,6 +6,7 @@ export default function TeamAndProjectOverview({ onBack }) {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
   const [winWidth, setWinWidth] = useState(window.innerWidth);
+  const [zoomedId, setZoomedId] = useState(null);
 
   React.useEffect(() => {
     const handleResize = () => setWinWidth(window.innerWidth);
@@ -34,6 +35,16 @@ export default function TeamAndProjectOverview({ onBack }) {
   };
 
   const isMobile = winWidth < 768;
+
+  const getTeamMembers = (leaderName) => {
+    const name = String(leaderName || '').toLowerCase();
+    if (name.includes('santhosh')) return ['Tejaswini'];
+    if (name.includes('namith')) return ['Aishwarya', 'Rakshitha', 'Varun', 'Faraz'];
+    if (name.includes('rakesh')) return ['Shobha', 'Ashwini'];
+    if (name.includes('sahana')) return ['Imsha', 'Vishalakshi', 'Anoop'];
+    if (name.includes('deekshitha')) return ['Sonu', 'Akhil'];
+    return ['Team Member 1', 'Team Member 2'];
+  };
 
   const styles = {
     container: { 
@@ -206,12 +217,63 @@ export default function TeamAndProjectOverview({ onBack }) {
       fontWeight: '900',
       color: '#315A9E',
       textDecoration: 'none',
-      cursor: 'pointer'
+      cursor: 'default' // Changed to default arrow mark as requested
+    },
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100vw',
+      height: '100vh',
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      zIndex: 99,
+      display: zoomedId ? 'block' : 'none'
+    },
+    zoomedCard: {
+      transform: 'scale(1.1)',
+      zIndex: 100,
+      position: 'relative',
+      boxShadow: '0 20px 50px rgba(0,0,0,0.2)'
+    },
+    rosterContainer: {
+      padding: '15px 24px',
+      backgroundColor: '#f8fafc',
+      borderTop: '1px solid #e2e8f0',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '10px'
+    },
+    rosterMember: {
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      padding: '8px',
+      backgroundColor: 'white',
+      borderRadius: '8px',
+      border: '1px solid #e2e8f0'
+    },
+    rosterAvatar: {
+      width: '28px',
+      height: '28px',
+      backgroundColor: '#e0f2fe',
+      color: '#0ea5e9',
+      borderRadius: '50%',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontSize: '12px',
+      fontWeight: 'bold'
+    },
+    rosterName: {
+      fontSize: '12px',
+      fontWeight: '700',
+      color: '#1e293b'
     }
   };
 
   return (
-    <div style={styles.container}>
+    <div style={styles.container} onClick={() => setZoomedId(null)}>
+      <div style={styles.overlay} />
       <div style={styles.header}>
         {onBack && (
           <div 
@@ -230,8 +292,14 @@ export default function TeamAndProjectOverview({ onBack }) {
         <div style={styles.grid}>
           {teams.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', gridColumn: '1/-1', color: '#64748B', fontWeight: '800' }}>No teams found.</div>
-          ) : teams.map(team => (
-            <div key={team.id} style={styles.card}>
+          ) : teams.map(team => {
+            const isZoomed = zoomedId === team.id;
+            return (
+            <div 
+              key={team.id} 
+              style={{ ...styles.card, transition: 'all 0.3s ease', cursor: 'default', ...(isZoomed ? styles.zoomedCard : {}) }}
+              onClick={(e) => { e.stopPropagation(); setZoomedId(isZoomed ? null : team.id); }}
+            >
               <div style={styles.cardHeader}>
                 <h3 style={styles.teamName}>{team.name}</h3>
                 <span style={styles.statusBadge}>{team.status || 'ACTIVE'}</span>
@@ -271,11 +339,24 @@ export default function TeamAndProjectOverview({ onBack }) {
                 </div>
               </div>
 
+              {isZoomed && (
+                <div style={styles.rosterContainer}>
+                  <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Team Members</div>
+                  {getTeamMembers(team.leader || team.lead).map((memberName, idx) => (
+                    <div key={idx} style={styles.rosterMember}>
+                      <div style={styles.rosterAvatar}>{memberName.charAt(0)}</div>
+                      <div style={styles.rosterName}>{memberName}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <div style={styles.footer}>
-                <span style={styles.footerLink}>View Team Roster &rarr;</span>
+                <span style={styles.footerLink}>{isZoomed ? 'Hide Team Roster \u2191' : 'View Team Roster \u2192'}</span>
               </div>
             </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

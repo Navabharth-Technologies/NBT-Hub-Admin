@@ -240,10 +240,10 @@ export default function ProfileScreen({ onBack }) {
   const isSmallMobile = winWidth < 480;
 
   const styles = {
-    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '100px', fontFamily: 'system-ui, -apple-system, sans-serif' },
+    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '160px', paddingTop: '30px', fontFamily: 'system-ui, -apple-system, sans-serif' },
     profileWrapper: { maxWidth: '1200px', margin: '0 auto', padding: '0 20px' },
     banner: { height: '160px', backgroundColor: '#0B1E3F', borderRadius: '0 0 24px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    bannerText: { color: '#FFFFFF', fontSize: '13px', fontWeight: '800', letterSpacing: '0.5px', textAlign: 'center' },
+    bannerText: { color: '#FFFFFF', fontSize: '18px', fontWeight: '800', letterSpacing: '0.5px', textAlign: 'center', textTransform: 'capitalize' },
     masterCard: { backgroundColor: 'white', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', padding: '35px', position: 'relative', marginTop: '-40px', border: '1px solid #F1F5F9' },
     headerRow: { display: 'flex', justifyContent: 'flex-start', alignItems: 'center', flexWrap: 'wrap', gap: '60px', paddingBottom: '25px' },
     avatarContainer: { position: 'relative' },

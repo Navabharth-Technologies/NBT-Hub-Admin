@@ -21,7 +21,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState({
-    start: '2026-02-01',
+    start: new Date().toISOString().split('T')[0],
     end: new Date().toISOString().split('T')[0]
   });
   
@@ -421,76 +421,44 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
 
         {/* Small Summary Boxes below Title */}
         <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '16px', marginBottom: '30px' }}>
-          <div style={{ backgroundColor: 'white', padding: isMobile ? '12px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <div 
+            onClick={() => {
+              setSearchTerm('');
+              setDateRange({ start: '2026-02-01', end: new Date().toISOString().split('T')[0] });
+            }}
+            style={{ backgroundColor: 'white', padding: isMobile ? '12px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
+          >
             <div style={{ backgroundColor: '#F0FDF4', padding: '6px', borderRadius: '8px' }}><FileText size={16} color="#10B981" /></div>
             <div>
               <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>LOGS</div>
-              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#0B1E3F' }}>{metrics.totalLogs}</div>
+              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#0B1E3F' }}>{filteredLogs.length}</div>
             </div>
           </div>
           <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
             <div style={{ backgroundColor: '#EFF6FF', padding: '6px', borderRadius: '8px' }}><UserCheck size={16} color="#3B82F6" /></div>
             <div>
               <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>PRESENT</div>
-              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#3B82F6' }}>{metrics.present}</div>
+              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#3B82F6' }}>
+                {filteredLogs.filter(log => {
+                  const inT = log.in_time || log.punch_in;
+                  return inT && inT !== '--:--';
+                }).length}
+              </div>
             </div>
           </div>
           <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px', gridColumn: isMobile ? 'span 2' : 'auto' }}>
             <div style={{ backgroundColor: '#FEF2F2', padding: '6px', borderRadius: '8px' }}><LogOut size={16} color="#EF4444" /></div>
             <div>
               <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>ABSENT</div>
-              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#EF4444' }}>{metrics.absent}</div>
+              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#EF4444' }}>
+                {filteredLogs.filter(log => {
+                  const inT = log.in_time || log.punch_in;
+                  return !inT || inT === '--:--';
+                }).length}
+              </div>
             </div>
           </div>
         </div>
-
-          {!isMobile && <div style={{ flex: 1 }} />}
-
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', width: isMobile ? '100%' : 'auto', position: 'relative' }}>
-            <button 
-              style={{ ...styles.filterBtn, flex: isMobile ? 1 : 'none' }}
-              onClick={() => setShowFilterMenu(!showFilterMenu)}
-            >
-              <Filter size={16} /> Filter <ChevronDown size={14} />
-            </button>
-
-            {showFilterMenu && (
-              <div style={{
-                position: 'absolute',
-                top: '48px',
-                left: 0,
-                width: '220px',
-                backgroundColor: 'white',
-                borderRadius: '16px',
-                boxShadow: '0 10px 25px rgba(0,0,0,0.1)',
-                padding: '8px',
-                zIndex: 1000,
-                border: '1px solid #F1F5F9'
-              }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', cursor: 'pointer', borderRadius: '12px', transition: '0.2s' }} 
-                     onClick={() => { dateRef.current?.focus(); setShowFilterMenu(false); }}
-                     onMouseOver={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                     onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  <Calendar size={18} color="#6366F1" />
-                  <span style={{ fontSize: '14px', fontWeight: '800', color: '#0B1E3F' }}>Date Range</span>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '12px 16px', cursor: 'pointer', borderRadius: '12px', transition: '0.2s' }}
-                     onClick={() => { searchRef.current?.focus(); setShowFilterMenu(false); }}
-                     onMouseOver={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
-                     onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
-                  <User size={18} color="#0EA5E9" />
-                  <span style={{ fontSize: '14px', fontWeight: '800', color: '#0B1E3F' }}>Name</span>
-                </div>
-              </div>
-            )}
-
-            <button 
-              style={{ ...styles.workforceBtn, flex: isMobile ? 1 : 'none' }} 
-              onClick={() => setShowAll(!showAll)}
-            >
-              {showAll ? 'Show Less' : 'View All Workforce'}
-            </button>
-          </div>
 
         {/* Clean Table Section */}
         <div style={{ backgroundColor: 'white', borderRadius: '24px', border: '1.5px solid #F1F5F9', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
@@ -514,11 +482,13 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
               ) : filteredLogs.length === 0 ? (
                 <tr><td colSpan="9" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>No history found for the selected period.</td></tr>
               ) : (
-                filteredLogs.slice(0, showAll ? filteredLogs.length : 7).map((log, i) => {
-                  const status = (log.status || (log.in_time ? 'P' : 'A')).toUpperCase();
-                  const isP = status.includes('P');
-                  const color = isP ? '#10B981' : (status.includes('WO') ? '#3B82F6' : '#EF4444');
-                  const bg = isP ? '#F0FDF4' : (status.includes('WO') ? '#EFF6FF' : '#FEF2F2');
+                filteredLogs.map((log, i) => {
+                  const inT = log.in_time || log.punch_in;
+                  const isValidPunch = inT && inT !== '--:--';
+                  const status = isValidPunch ? 'P' : 'A';
+                  const isP = status === 'P';
+                  const color = isP ? '#10B981' : '#EF4444';
+                  const bg = isP ? '#F0FDF4' : '#FEF2F2';
                   
                   return (
                     <tr 

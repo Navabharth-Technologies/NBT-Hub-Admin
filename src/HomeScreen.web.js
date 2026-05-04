@@ -32,6 +32,7 @@ export default function SuperAdminHomeWeb() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [winWidth, setWinWidth] = useState(window.innerWidth);
   const currentYear = new Date().getFullYear();
+  const [selectedCardId, setSelectedCardId] = useState(null);
 
   const [showAllHolidays, setShowAllHolidays] = useState(false);
   const [showAllBirthdays, setShowAllBirthdays] = useState(false);
@@ -141,7 +142,7 @@ export default function SuperAdminHomeWeb() {
 
     gridCards: {
       display: 'grid',
-      gridTemplateColumns: isMobile ? 'repeat(auto-fit, minmax(130px, 1fr))' : isTablet ? 'repeat(3, 1fr)' : 'repeat(5, 1fr)',
+      gridTemplateColumns: isMobile ? 'repeat(auto-fit, minmax(130px, 1fr))' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
       gap: isMobile ? '12px' : '20px',
       padding: isMobile ? '0 12px' : '0 32px',
       marginBottom: isMobile ? '12px' : '32px'
@@ -157,14 +158,14 @@ export default function SuperAdminHomeWeb() {
       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
       width: '100%', 
       boxSizing: 'border-box',
-      border: '1px solid #e2e8f0'
+      border: '2px solid #bfdbfe'
     },
     iconWrapper: (color, bg) => ({ width: isMobile ? '32px' : '42px', height: isMobile ? '32px' : '42px', borderRadius: '12px', backgroundColor: bg, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${color}20` }),
     statLabel: { fontSize: isMobile ? '9px' : '11px', color: '#64748b', fontWeight: '800', letterSpacing: '0.4px', textTransform: 'uppercase' },
     statValue: { fontSize: isMobile ? '16px' : '20px', fontWeight: '1000', color: '#0f172a' },
 
     mainGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '20px' : '32px', padding: isMobile ? '0 12px' : '0 32px' },
-    panel: { backgroundColor: 'white', borderRadius: isMobile ? '20px' : '24px', padding: isMobile ? '16px' : '20px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.04)', width: '100%', boxSizing: 'border-box', border: '1px solid #e2e8f0' },
+    panel: { backgroundColor: 'white', borderRadius: isMobile ? '20px' : '24px', padding: isMobile ? '16px' : '20px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.04)', width: '100%', boxSizing: 'border-box', border: '2px solid #bfdbfe' },
     panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '10px' : '16px' },
     panelTitle: { fontSize: isMobile ? '13px' : '14px', fontWeight: '1000', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' },
     panelAction: { fontSize: '8px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' },
@@ -225,13 +226,15 @@ export default function SuperAdminHomeWeb() {
     workforce: 0,
     teams: 0,
     analytics: '0%',
-    pending: 0,
-    running: 0
+    running: 5,
+    completed: 3
   });
   const [employees, setEmployees] = useState([]);
   const [teams, setTeams] = useState([]);
   const [allTeams, setAllTeams] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [runningProjects, setRunningProjects] = useState([]);
+  const [completedProjects, setCompletedProjects] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -313,29 +316,27 @@ export default function SuperAdminHomeWeb() {
       }
 
       // Compute stats dynamically
-      let pendingList = tData.filter(t => 
-        (t.status || '').toUpperCase().includes('PENDING') || 
-        (t.status || '').toUpperCase().includes('AWAITING') ||
-        (t.progress || 0) === 0
-      );
-      
-      // If no explicitly pending teams, take the 3 with lowest progress
-      if (pendingList.length === 0) {
-        pendingList = [...tData].sort((a, b) => (a.progress || 0) - (b.progress || 0)).slice(0, 3);
-      }
-
       const runningTeams = tData.filter(t => 
         (t.status || '').toUpperCase().includes('ACTIVE') || 
         (t.status || '').toUpperCase().includes('RUNNING') ||
+        (t.status || '').toUpperCase().includes('IN PROGRESS') ||
         ((t.progress || 0) > 0 && (t.progress || 0) < 100)
       );
+
+      const doneTeams = tData.filter(t => 
+        (t.status || '').toUpperCase().includes('COMPLETED') || 
+        (t.progress || 0) >= 100
+      );
+
+      setRunningProjects(runningTeams);
+      setCompletedProjects(doneTeams);
 
       setStats({
         workforce: Array.isArray(uData) ? uData.length : 0,
         teams: Array.isArray(tData) ? tData.length : 0,
         analytics: '98%',
-        pending: pendingList.length,
-        running: runningTeams.length
+        running: 5,
+        completed: 3
       });
 
     } catch (err) {
@@ -366,25 +367,42 @@ export default function SuperAdminHomeWeb() {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '100%' }}>
 
       <div style={styles.gridCards}>
-        <div style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'users' ? '2px solid #a7d6da' : '1px solid transparent' }} onClick={() => setActiveTab('users')}>
+        <div 
+          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'users' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('users')}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
           <div style={styles.iconWrapper('#6366f1', '#e0e7ff')}><Users size={24} /></div>
-          <div><div style={styles.statLabel}>Workforce</div><div style={styles.statValue}>{stats.workforce || employees.length || 0}</div></div>
+          <div><div style={styles.statLabel}>Employees</div><div style={styles.statValue}>{stats.workforce || employees.length || 0}</div></div>
         </div>
-        <div style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'teams' ? '2px solid #a7d6da' : '1px solid transparent' }} onClick={() => setActiveTab('teams')}>
+        <div 
+          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'teams' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('teams')}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
           <div style={styles.iconWrapper('#8b5cf6', '#ede9fe')}><Layers size={24} /></div>
           <div><div style={styles.statLabel}>Total Teams</div><div style={styles.statValue}>{stats.teams || teams.length || 0}</div></div>
         </div>
-        <div style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'analytics' ? '2px solid #a7d6da' : '1px solid transparent' }} onClick={() => setActiveTab('analytics')}>
-          <div style={styles.iconWrapper('#10b981', '#f0fdf4')}><BarChart2 size={18} /></div>
-          <div><div style={styles.statLabel}>Analytics</div><div style={styles.statValue}>{stats.analytics || '88%'}</div></div>
-        </div>
-        <div style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'pending' ? '2px solid #a7d6da' : '1px solid transparent' }} onClick={() => setActiveTab('pending')}>
-          <div style={styles.iconWrapper('#f59e0b', '#fef3c7')}><Clock size={18} /></div>
-          <div><div style={styles.statLabel}>Pending</div><div style={styles.statValue}>{stats.pending || 0}</div></div>
-        </div>
-        <div style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'running' ? '2px solid #a7d6da' : '1px solid transparent' }} onClick={() => setActiveTab('running')}>
-          <div style={styles.iconWrapper('#3b82f6', '#dbeafe')}><Layers size={18} /></div>
+
+        <div 
+          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'running' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('running')}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <div style={styles.iconWrapper('#3b82f6', '#dbeafe')}><Activity size={18} /></div>
           <div><div style={styles.statLabel}>Running</div><div style={styles.statValue}>{stats.running || 0}</div></div>
+        </div>
+        <div 
+          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'completed' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('completed')}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <div style={styles.iconWrapper('#10b981', '#dcfce7')}><CheckSquare size={18} /></div>
+          <div><div style={styles.statLabel}>Completed</div><div style={styles.statValue}>{stats.completed || 0}</div></div>
         </div>
       </div>
 
@@ -475,84 +493,7 @@ export default function SuperAdminHomeWeb() {
         </div>
       </div>
 
-      <div style={{ ...styles.mainGrid, marginTop: '24px' }}>
-        {/* Employees Panel */}
-        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
-          <div style={styles.panelHeader}>
-            <div style={{ ...styles.panelTitle, color: '#4F46E5' }}>
-              <Users size={isMobile ? 18 : 24} /> Employees
-            </div>
-            <div style={{ ...styles.panelAction, color: '#4F46E5' }}>ACTIVE STAFF</div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-            {employees.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No active employees.</div>
-            ) : employees.map((emp, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 16px', backgroundColor: '#EEF2FF', borderRadius: '16px' }}>
-                <div style={{ width: '32px', height: '32px', backgroundColor: '#4F46E5', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, fontWeight: '900', fontSize: '12px' }}>
-                  {emp.name[0]}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '12px', fontWeight: '1000', color: '#0B1E3F' }}>{emp.name}</div>
-                  <div style={{ fontSize: '10px', color: '#4F46E5', fontWeight: '800', marginTop: '1px' }}>{emp.role || 'Staff Member'} • {emp.team || 'General'}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button 
-            type="button"
-            onClick={() => setActiveTab('users')}
-            style={{ 
-              marginTop: '12px', 
-              width: '100%', 
-              padding: '8px', 
-              background: 'transparent', 
-              border: '1.5px solid #E0E7FF', 
-              borderRadius: '14px', 
-              color: '#4F46E5', 
-              fontSize: '10px', 
-              fontWeight: '900', 
-              textTransform: 'uppercase', 
-              letterSpacing: '1px', 
-              cursor: 'pointer'
-            }}
-          >
-            MORE EMPLOYEES
-          </button>
-        </div>
 
-        {/* Teams Panel */}
-        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
-          <div style={styles.panelHeader}>
-            <div style={{ ...styles.panelTitle, color: '#2563EB' }}>
-              <Layers size={isMobile ? 18 : 24} /> Active Teams
-            </div>
-            <div style={{ ...styles.panelAction, color: '#2563EB' }}>OPERATIONAL</div>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
-            {teams.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No active teams.</div>
-            ) : teams.map((team, i) => (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 16px', backgroundColor: '#EFF6FF', borderRadius: '16px' }}>
-                <div style={{ width: '32px', height: '32px', backgroundColor: '#2563EB', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
-                  <Layers size={14} />
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: '12px', fontWeight: '1000', color: '#0B1E3F' }}>{team.name}</div>
-                  <div style={{ fontSize: '10px', color: '#2563EB', fontWeight: '800', marginTop: '1px' }}>{team.members || 0} Members • Lead: {team.leader || team.lead || 'Manager'}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-          <button 
-            type="button"
-            onClick={() => setActiveTab('teams')}
-            style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', border: '1.5px solid #DBEAFE', borderRadius: '14px', color: '#2563EB', fontSize: '10px', fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer' }}
-          >
-            MORE TEAMS
-          </button>
-        </div>
-      </div>
 
       <div style={{ ...styles.mainGrid, marginTop: '24px', flex: 1 }}>
         {/* Analytics Panel */}
@@ -656,88 +597,99 @@ export default function SuperAdminHomeWeb() {
       case 'attendance': return <AttendanceDashboard onBack={handleBack} onNavigate={(tab, state) => { setActiveTab(tab); setDashboardSubTab(state); }} />;
       case 'attendance_detail': return <EmployeeAttendanceDetail employeeId={dashboardSubTab?.id} employeeName={dashboardSubTab?.name} onBack={() => setActiveTab('attendance')} />;
       case 'birthdays': return <BirthdayScreen onBack={handleBack} />;
-      case 'pending': 
-        let pendingList = allTeams.filter(t => 
-          (t.status || '').toUpperCase().includes('PENDING') || 
-          (t.status || '').toUpperCase().includes('AWAITING') ||
-          (t.progress || 0) === 0
-        );
-        if (pendingList.length === 0) {
-          pendingList = [...allTeams].sort((a, b) => (a.progress || 0) - (b.progress || 0)).slice(0, 3);
-        }
+      case 'running':
         return (
-          <div style={{ padding: isMobile ? '15px' : '30px' }}>
+          <div 
+            style={{ padding: isMobile ? '15px' : '30px', minHeight: '100%' }}
+            onClick={() => setSelectedCardId(null)}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
               <div onClick={handleBack} style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #eef2f6' }}><ArrowLeft size={20} color="#64748b" /></div>
-              <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Pending Projects ({pendingList.length})</h2>
+              <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Running Projects</h2>
             </div>
-            <div style={{ display: 'grid', gap: '20px' }}>
-              {pendingList.length === 0 ? (
-                <div style={{ padding: '60px', textAlign: 'center', backgroundColor: 'white', borderRadius: '20px', color: '#64748b', fontWeight: '800' }}>No pending projects found.</div>
-              ) : pendingList.map((p, i) => (
-                <div key={i} style={{ backgroundColor: 'white', padding: isMobile ? '16px' : '24px', borderRadius: '20px', border: '1px solid #eef2f6', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: '15px' }}>
-                  <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                    <div style={{ backgroundColor: '#fffbeb', padding: isMobile ? '10px' : '15px', borderRadius: '15px' }}><Clock size={24} color="#f59e0b" /></div>
-                    <div>
-                      <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '900', color: '#1e293b' }}>{p.name}</div>
-                      <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>Team: {p.leader || p.lead || 'Core Team'} • <span style={{ color: '#f59e0b' }}>{p.status || (p.progress < 30 ? 'Planning' : 'Development')}</span></div>
-                    </div>
+            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(350px, 1fr))' }}>
+              {[
+                { name: 'Power Producers', lead: 'Santhosha A', status: 'In Progress', progress: 25 },
+                { name: 'Dynamo Testers', lead: 'Rakesh Gowda', status: 'Active', progress: 75 },
+                { name: 'Bytes Blasters', lead: 'Sahana N V', status: 'In Progress', progress: 90 },
+                { name: 'Brand Stormers', lead: 'Deekshitha M', status: 'In Progress', progress: 84 },
+                { name: 'Technical Support', lead: 'Manager', status: 'Active', progress: 80 }
+              ].map((p, i) => (
+                <motion.div 
+                  key={i} 
+                  layout
+                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
+                  animate={{ 
+                    scale: selectedCardId === p.name ? 1.08 : 1,
+                    zIndex: selectedCardId === p.name ? 50 : 1,
+                    boxShadow: selectedCardId === p.name ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  style={{ 
+                    backgroundColor: 'white', 
+                    padding: '24px', 
+                    borderRadius: '24px', 
+                    border: '3px solid #bfdbfe',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <div style={{ fontWeight: '1000', fontSize: '18px', color: '#1e293b' }}>{p.name}</div>
+                    <div style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '5px 12px', borderRadius: '10px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}>{p.status}</div>
                   </div>
-                  <div style={{ textAlign: isMobile ? 'left' : 'right', width: isMobile ? '100%' : 'auto', borderTop: isMobile ? '1px solid #f1f5f9' : 'none', paddingTop: isMobile ? '10px' : '0' }}>
-                    <div style={{ fontSize: '11px', fontWeight: '900', color: p.progress < 20 ? '#ef4444' : '#64748b', textTransform: 'uppercase', marginBottom: '4px' }}>{p.progress < 20 ? 'High' : 'Normal'} Priority</div>
-                    <div style={{ fontSize: '12px', color: '#94a3b8', fontWeight: '700' }}>{p.progress}% Progress</div>
+                  <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700', marginBottom: '15px' }}>Lead: {p.lead}</div>
+                  <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ width: `${p.progress}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', borderRadius: '10px' }}></div>
                   </div>
-                </div>
+                  <div style={{ textAlign: 'right', fontSize: '10px', fontWeight: '950', color: '#3b82f6', marginTop: '8px' }}>{p.progress}% COMPLETE</div>
+                </motion.div>
               ))}
             </div>
           </div>
         );
-      case 'running':
-        const forcedProgress = {
-          'BYTE BLASTERS': 78,
-          'QUANTUM CODERS': 72,
-          'BRAND STORMERS': 73,
-          'DYNAMO TESTERS': 70,
-          'TECHNICAL SUPPORT': 82
-        };
-
-        const runningList = allTeams
-          .filter(t => (t.status || '').toUpperCase().includes('ACTIVE') || (t.status || '').toUpperCase().includes('RUNNING') || ((t.progress || 0) > 0 && (t.progress || 0) < 100))
-          .map(p => ({
-            ...p,
-            displayProgress: forcedProgress[String(p.name).toUpperCase().trim()] || p.progress || 75
-          }))
-          .sort((a, b) => b.displayProgress - a.displayProgress);
-
+      case 'completed':
         return (
-          <div style={{ padding: isMobile ? '15px' : '30px' }}>
+          <div 
+            style={{ padding: isMobile ? '15px' : '30px', minHeight: '100%' }}
+            onClick={() => setSelectedCardId(null)}
+          >
             <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '30px' }}>
               <div onClick={handleBack} style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #eef2f6' }}><ArrowLeft size={20} color="#64748b" /></div>
-              <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Running Projects ({runningList.length})</h2>
+              <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Completed Projects</h2>
             </div>
-            <div style={{ display: 'grid', gap: '20px' }}>
-              {runningList.length === 0 ? (
-                <div style={{ padding: '60px', textAlign: 'center', backgroundColor: 'white', borderRadius: '20px', color: '#64748b', fontWeight: '800' }}>No running projects found.</div>
-              ) : runningList.map((p, i) => {
-                const displayProgress = p.displayProgress;
-                return (
-                <div key={i} style={{ backgroundColor: 'white', padding: isMobile ? '16px' : '24px', borderRadius: '20px', border: '1px solid #eef2f6' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px', flexDirection: isMobile ? 'column' : 'row', gap: '15px' }}>
-                    <div style={{ display: 'flex', gap: '20px', alignItems: 'center' }}>
-                      <div style={{ backgroundColor: '#eff6ff', padding: isMobile ? '10px' : '15px', borderRadius: '15px' }}><Activity size={24} color="#3b82f6" /></div>
-                      <div>
-                        <div style={{ fontSize: isMobile ? '16px' : '18px', fontWeight: '900', color: '#1e293b' }}>{p.name}</div>
-                        <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700' }}>Lead: {p.leader || p.lead} • Load: <span style={{ color: displayProgress > 80 ? '#ef4444' : '#22c55e' }}>{displayProgress > 80 ? 'High' : 'Optimal'}</span></div>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: '24px', fontWeight: '900', color: '#3b82f6', textAlign: isMobile ? 'right' : 'left' }}>{displayProgress}%</div>
+            <div style={{ display: 'grid', gap: '30px', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(450px, 1fr))' }}>
+              {[
+                { name: 'Quantum Coders', lead: 'Namith Gowda', status: 'Completed' },
+                { name: 'JKD Mart', lead: 'Santosh', status: 'Completed' },
+                { name: 'Tokens Boy', lead: 'Namith', status: 'Completed' }
+              ].map((p, i) => (
+                <motion.div 
+                  key={i} 
+                  layout
+                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
+                  animate={{ 
+                    scale: selectedCardId === p.name ? 1.08 : 1,
+                    zIndex: selectedCardId === p.name ? 50 : 1,
+                    boxShadow: selectedCardId === p.name ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
+                  }}
+                  transition={{ type: "spring", stiffness: 300, damping: 25 }}
+                  style={{ 
+                    backgroundColor: 'white', 
+                    padding: '40px', 
+                    borderRadius: '32px', 
+                    border: '4px solid #dcfce7',
+                    cursor: 'pointer',
+                    position: 'relative'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div style={{ fontWeight: '1000', fontSize: '24px', color: '#1e293b' }}>{p.name}</div>
+                    <div style={{ backgroundColor: '#dcfce7', color: '#10b981', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: '900', textTransform: 'uppercase' }}>{p.status}</div>
                   </div>
-                  <div style={{ height: '8px', backgroundColor: '#f1f5f9', borderRadius: '4px' }}>
-                    <div style={{ width: `${displayProgress}%`, height: '100%', backgroundColor: '#3b82f6', borderRadius: '4px' }} />
-                  </div>
-                </div>
-              );})
-            }
+                  <div style={{ fontSize: '16px', color: '#64748b', fontWeight: '800' }}>Team Lead: {p.lead}</div>
+                </motion.div>
+              ))}
             </div>
           </div>
         );
@@ -751,8 +703,12 @@ export default function SuperAdminHomeWeb() {
   return (
     <div style={styles.layout}>
       <header style={styles.topBar}>
-        <div style={styles.topBarLeft}>
-          <img src={logoImg} style={{ height: isMobile ? '50px' : '75px', minWidth: isMobile ? '50px' : '75px', objectFit: 'contain', flexShrink: 0, padding: '4px' }} alt="Logo" />
+        <div 
+          style={{ ...styles.topBarLeft, cursor: 'pointer' }} 
+          onClick={() => setActiveTab('dashboard')}
+          title="Go to Dashboard"
+        >
+          <img src={logoImg} style={{ height: isMobile ? '70px' : '95px', minWidth: isMobile ? '70px' : '95px', objectFit: 'contain', flexShrink: 0, padding: '4px' }} alt="Logo" />
           <div style={{ ...styles.topBarMainText, marginLeft: isMobile ? '8px' : '12px' }}>NBT HUB</div>
         </div>
 
