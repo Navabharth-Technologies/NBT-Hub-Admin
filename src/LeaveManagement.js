@@ -208,10 +208,9 @@ export default function LeaveManagement({ onBack }) {
     const type = (req.leave_type || '').toLowerCase();
     const matchesSearch = name.includes(searchTerm.toLowerCase()) || type.includes(searchTerm.toLowerCase());
     
-    // Broadened Management Role Check to include Leads and Heads
-    const isManagement = ['PROJECT MANAGER', 'HR', 'TEAM LEADER', 'TL', 'PM', 'MANAGER', 'LEAD', 'HEAD', 'EXECUTIVE', 'DIRECTOR'].some(r => 
-      String(req.role || '').toUpperCase().includes(r)
-    );
+    // Strict filter: Only HR and Project Manager applications are visible to Super Admin
+    const roleStr = String(req.role || '').toUpperCase();
+    const isManagement = roleStr === 'HR' || roleStr.includes('PROJECT MANAGER') || roleStr === 'PM' || roleStr.includes('HUMAN RESOURCE');
 
     const status = String(req.status || '').toUpperCase();
     const isPending = status === 'PENDING' || status === 'REQUESTED';
@@ -221,25 +220,35 @@ export default function LeaveManagement({ onBack }) {
       return matchesSearch && isPending && isManagement;
     }
     if (activeTab === 'HISTORY') {
-      // History should ONLY show completed (Approved/Rejected) requests
-      return matchesSearch && !isPending;
+      // History should ONLY show completed (Approved/Rejected) requests for these specific roles
+      return matchesSearch && !isPending && isManagement;
     }
     if (activeTab === 'EMPLOYEE_LEAVES') {
       const targetDate = filterDate;
       const start = req.start_date ? String(req.start_date).split('T')[0] : '';
       const end = req.end_date ? String(req.end_date).split('T')[0] : start;
-      return matchesSearch && start <= targetDate && end >= targetDate;
+      return matchesSearch && start <= targetDate && end >= targetDate && isManagement;
     }
-    return matchesSearch;
+    return matchesSearch && isManagement;
   });
 
   const stats = {
     pending: requests.filter(r => {
       const s = String(r.status || '').toUpperCase();
-      return s === 'PENDING' || s === 'REQUESTED';
+      const roleStr = String(r.role || '').toUpperCase();
+      const isMgmt = roleStr === 'HR' || roleStr.includes('PROJECT MANAGER') || roleStr === 'PM' || roleStr.includes('HUMAN RESOURCE');
+      return (s === 'PENDING' || s === 'REQUESTED') && isMgmt;
     }).length,
-    approved: requests.filter(r => String(r.status || '').toUpperCase() === 'APPROVED').length,
-    total: requests.length
+    approved: requests.filter(r => {
+      const s = String(r.status || '').toUpperCase();
+      const roleStr = String(r.role || '').toUpperCase();
+      const isMgmt = roleStr === 'HR' || roleStr.includes('PROJECT MANAGER') || roleStr === 'PM' || roleStr.includes('HUMAN RESOURCE');
+      return s === 'APPROVED' && isMgmt;
+    }).length,
+    total: requests.filter(r => {
+      const roleStr = String(r.role || '').toUpperCase();
+      return roleStr === 'HR' || roleStr.includes('PROJECT MANAGER') || roleStr === 'PM' || roleStr.includes('HUMAN RESOURCE');
+    }).length
   };
 
   const s = {
@@ -373,7 +382,7 @@ export default function LeaveManagement({ onBack }) {
         {loading ? (
           <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>Synchronizing Leave Database...</div>
         ) : filteredRequests.length === 0 ? (
-          <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>No leave requests found.</div>
+          <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>No leave requests found for HR/PM.</div>
         ) : (activeTab === 'HISTORY' || activeTab === 'EMPLOYEE_LEAVES') ? (
           <div style={{ backgroundColor: 'white', borderRadius: '25px', overflowX: 'auto', border: '1.5px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
             <table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -439,7 +448,7 @@ export default function LeaveManagement({ onBack }) {
                   <h4 style={{ margin: 0, fontSize: isMobile ? '14px' : '16px', fontWeight: '1000', color: '#0B1E3F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.user_name || req.name}</h4>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', flexWrap: 'wrap' }}>
                     <p style={{ margin: 0, fontSize: isMobile ? '10px' : '12px', color: '#64748b', fontWeight: '700' }}>{isMobile ? req.leave_type?.split(' ')[0] : req.leave_type} • {req.no_of_days}d</p>
-                    {['PROJECT MANAGER', 'HR', 'TEAM LEADER', 'TL', 'PM'].some(r => String(req.role || '').toUpperCase().includes(r)) && (
+                    {['PROJECT MANAGER', 'HR', 'PM'].some(r => String(req.role || '').toUpperCase().includes(r)) && (
                       <span style={{ fontSize: '8px', fontWeight: '900', color: '#3863A8', backgroundColor: '#dbeafe', padding: '1px 4px', borderRadius: '4px', textTransform: 'uppercase' }}>
                         {isMobile ? (req.role?.includes('Manager') ? 'PM' : req.role) : req.role}
                       </span>
@@ -615,7 +624,8 @@ export default function LeaveManagement({ onBack }) {
 
               {/* Action Buttons */}
               {String(selectedLeave.status || '').toUpperCase() === 'PENDING' && 
-               ['PROJECT MANAGER', 'HR', 'TEAM LEADER', 'TL', 'PM', 'MANAGER', 'LEAD', 'HEAD', 'EXECUTIVE', 'DIRECTOR'].some(r => String(selectedLeave.role || '').toUpperCase().includes(r)) &&                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '15px', width: '100%' }}>
+               ['PROJECT MANAGER', 'HR', 'PM'].some(r => String(selectedLeave.role || '').toUpperCase().includes(r)) && (
+                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '15px', width: '100%' }}>
                   <button 
                     onClick={() => handleAction(selectedLeave.id, 'Rejected', adminRemarks)}
                     style={{ flex: 1, padding: isMobile ? '15px' : '20px', borderRadius: '18px', border: 'none', backgroundColor: '#fee2e2', color: '#ef4444', fontWeight: '1000', fontSize: isMobile ? '12px' : '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
@@ -629,7 +639,7 @@ export default function LeaveManagement({ onBack }) {
                     <CheckCircle size={18} /> Approve Leave
                   </button>
                 </div>
-              }
+              )}
             </motion.div>
           </motion.div>
         )}
