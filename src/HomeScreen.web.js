@@ -443,7 +443,15 @@ export default function SuperAdminHomeWeb() {
           <button 
             type="button"
             onClick={() => setActiveTab('birthdays')}
-            style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', border: '1.5px solid #FFF1F2', borderRadius: '14px', color: '#E11D48', fontSize: '10px', fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FFE4E6'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFF1F2'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            style={{ 
+              marginTop: '12px', width: '100%', padding: '10px', 
+              backgroundColor: '#FFF1F2', border: '1.5px solid #FDA4AF', 
+              borderRadius: '14px', color: '#E11D48', fontSize: '10px', 
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
+              cursor: 'pointer', transition: 'all 0.3s ease' 
+            }}
           >
             MORE CELEBRATIONS
           </button>
@@ -486,7 +494,15 @@ export default function SuperAdminHomeWeb() {
           <button 
             type="button"
             onClick={() => setActiveTab('holidays')}
-            style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', border: '1.5px solid #FEF3C7', borderRadius: '14px', color: '#D97706', fontSize: '10px', fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FEF3C7'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFBEB'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            style={{ 
+              marginTop: '12px', width: '100%', padding: '10px', 
+              backgroundColor: '#FFFBEB', border: '1.5px solid #FDE68A', 
+              borderRadius: '14px', color: '#D97706', fontSize: '10px', 
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
+              cursor: 'pointer', transition: 'all 0.3s ease' 
+            }}
           >
             MORE HOLIDAYS
           </button>
@@ -530,7 +546,15 @@ export default function SuperAdminHomeWeb() {
           <button 
             type="button"
             onClick={() => setActiveTab('analytics')}
-            style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', border: '1.5px solid #DCFCE7', borderRadius: '14px', color: '#10B981', fontSize: '10px', fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#DCFCE7'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F0FDF4'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            style={{ 
+              marginTop: '12px', width: '100%', padding: '10px', 
+              backgroundColor: '#F0FDF4', border: '1.5px solid #BBF7D0', 
+              borderRadius: '14px', color: '#10B981', fontSize: '10px', 
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
+              cursor: 'pointer', transition: 'all 0.3s ease' 
+            }}
           >
             MORE ANALYTICS
           </button>
@@ -562,7 +586,15 @@ export default function SuperAdminHomeWeb() {
           <button 
             type="button"
             onClick={() => setActiveTab('suggestions')}
-            style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', border: '1.5px solid #FEF3C7', borderRadius: '14px', color: '#F59E0B', fontSize: '10px', fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '0.5px', cursor: 'pointer' }}
+            onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FDE68A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FEF3C7'; e.currentTarget.style.transform = 'translateY(0)'; }}
+            style={{ 
+              marginTop: '12px', width: '100%', padding: '10px', 
+              backgroundColor: '#FEF3C7', border: '1.5px solid #FCD34D', 
+              borderRadius: '14px', color: '#F59E0B', fontSize: '10px', 
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
+              cursor: 'pointer', transition: 'all 0.3s ease' 
+            }}
           >
             MORE SUGGESTIONS
           </button>
