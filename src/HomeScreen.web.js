@@ -171,13 +171,17 @@ export default function SuperAdminHomeWeb() {
     panelAction: { fontSize: '8px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' },
 
     dockWrapper: {
+      position: 'fixed',
+      bottom: isMobile ? '20px' : '40px',
+      left: 0,
       width: '100%',
       display: 'flex',
       justifyContent: 'center',
-      padding: isMobile ? '20px 0 40px 0' : '40px 0',
-      marginTop: '20px'
+      zIndex: 5000,
+      pointerEvents: 'none' // Allow clicks to pass through to content behind wrapper, but container needs pointerEvents: 'auto'
     },
     dockContainer: {
+      pointerEvents: 'auto',
       backgroundColor: 'rgba(167, 214, 218, 0.85)', // glassmorphism adapted
       borderRadius: '40px',
       display: 'flex',
