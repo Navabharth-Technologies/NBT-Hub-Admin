@@ -1,71 +1,241 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, 
-  Briefcase, 
-  CheckSquare, 
-  MessageSquare, 
-  Plus, 
-  Search, 
-  Bell, 
-  ChevronRight, 
-  BarChart2, 
-  Calendar, 
-  Gift, 
-  ArrowLeft, 
-  Clock,
-  Layout,
-  FileText,
-  Target,
-  UserCheck,
-  TrendingUp,
-  Settings,
-  HelpCircle,
-  LogOut,
-  Menu,
-  X
-} from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
-import { API_ENDPOINTS, BASE_URL } from './config';
+import { useThread } from './ThreadContext';
+import { Users, Database, Globe, Activity, Terminal, Lock, LayoutDashboard, Calendar, Heart, BookOpen, Layers, MessageSquare, ClipboardList, ShieldCheck, CheckSquare, Clock, Shield, User, Bell, BarChart2, Key, Download, LogOut, Trophy, Gift, ArrowLeft, ClipboardCheck, UserPlus } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+
 import UserManagement from './UserManagement';
+import CourseManagement from './CourseManagement';
 import TeamAndProjectOverview from './TeamAndProjectOverview';
+import SuggestionDashboard from './suggestion';
+import SystemLogs from './SystemLogs';
+import ComplianceDashboard from './ComplianceDashboard';
 import RoleManagement from './RoleManagement';
 import AnalyticsDashboard from './AnalyticsDashboard';
-import CourseManagement from './CourseManagement';
-import ThreadModule from './ThreadModule';
-import SuggestionDashboard from './SuggestionDashboard';
-import SystemLogs from './SystemLogs';
-import RewardsModule from './RewardsModule';
 import LeaveManagement from './LeaveManagement';
+
+import ThreadModule from './ThreadModule';
+import ProfileScreen from './ProfileScreen';
 import HolidayListScreen from './HolidayListScreen';
+import RewardsModule from './RewardsModule';
 import AttendanceDashboard from './AttendanceDashboard';
 import EmployeeAttendanceDetail from './EmployeeAttendanceDetail';
-import BirthdayScreen from './BirthdayScreen';
+import AdminAttendanceLogs from './AdminAttendanceLogs';
+import logoImg from './logo.png';
+import BirthdayScreen from './BirthdayListScreen';
+import { API_ENDPOINTS } from './config';
 
-export default function HomeScreen() {
+export default function SuperAdminHomeWeb() {
   const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [stats, setStats] = useState({ workforce: 0, running: 0, completed: 0, suggestions: 0 });
-  const [calendarItems, setCalendarItems] = useState([]);
-  const [suggestions, setSuggestions] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [winWidth, setWinWidth] = useState(window.innerWidth);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(window.innerWidth > 1024);
-  const [showAllBirthdays, setShowAllBirthdays] = useState(false);
-  const [showAllHolidays, setShowAllHolidays] = useState(false);
-  const [selectedCardId, setSelectedCardId] = useState(null);
   const [dashboardSubTab, setDashboardSubTab] = useState(null);
-  const isMobile = winWidth < 768;
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [winWidth, setWinWidth] = useState(window.innerWidth);
+  const currentYear = new Date().getFullYear();
+  const [selectedCardId, setSelectedCardId] = useState(null);
+
+  const [showAllHolidays, setShowAllHolidays] = useState(false);
+  const [showAllBirthdays, setShowAllBirthdays] = useState(false);
+  
+  // Real-time Thread Notifications
+  const [showDock, setShowDock] = useState(true);
+  const { unreadCount, clearNotifications } = useThread();
+  const scrollTimeout = useRef(null);
+  const scrollRef = useRef(null);
 
   useEffect(() => {
-    const handleResize = () => {
-      setWinWidth(window.innerWidth);
-      if (window.innerWidth <= 1024) setIsSidebarOpen(false);
-      else setIsSidebarOpen(true);
+    const handleScroll = () => {
+      setShowDock(false);
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+      scrollTimeout.current = setTimeout(() => {
+        setShowDock(true);
+      }, 3000); // 3 seconds delay before showing again
     };
+
+    const container = scrollRef.current;
+    if (container) {
+      container.addEventListener('scroll', handleScroll, { passive: true });
+    }
+    
+    return () => {
+      if (container) container.removeEventListener('scroll', handleScroll);
+      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'thread') {
+      clearNotifications();
+    }
+  }, [activeTab, clearNotifications]);
+
+  useEffect(() => {
+    const handleResize = () => setWinWidth(window.innerWidth);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Auto-scroll to content when sub-tab is clicked
+  useEffect(() => {
+    if (dashboardSubTab) {
+      const timer = setTimeout(() => {
+        window.scrollTo({
+          top: 600, // Scroll past the stat cards
+          behavior: 'smooth'
+        });
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [dashboardSubTab]);
+
+  const isMobile = winWidth < 768;
+  const isSmallMobile = winWidth < 480;
+  const isTablet = winWidth >= 768 && winWidth < 1024;
+
+  const styles = {
+    layout: { 
+      height: '100dvh', // Dynamic Viewport Height
+      maxHeight: '100dvh',
+      width: '100%',
+      backgroundColor: '#f8fafc', 
+      fontFamily: 'system-ui, sans-serif', 
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden'
+    },
+    topBar: {
+      backgroundColor: '#a7d6da',
+      color: '#1e293b',
+      padding: isMobile ? '12px 16px' : '0 32px',
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      zIndex: 4000,
+      width: '100%',
+      boxSizing: 'border-box',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
+      flexShrink: 0,
+      height: isMobile ? '60px' : '75px',
+      borderBottom: '2px solid rgba(0,0,0,0.05)'
+    },
+    mainContent: {
+      flex: 1,
+      overflowY: 'auto',
+      WebkitOverflowScrolling: 'touch',
+      display: 'flex',
+      flexDirection: 'column',
+      paddingTop: isMobile ? '10px' : '20px'
+    },
+    topBarLeft: { display: 'flex', flexDirection: 'row', alignItems: 'center', gap: isMobile ? '4px' : '8px', minWidth: 0 },
+    topBarTitle: { fontSize: isMobile ? '11px' : '16px', fontWeight: '900', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' },
+    topBarRole: { fontSize: isMobile ? '8px' : '11px', textTransform: 'uppercase', opacity: 0.8, whiteSpace: 'nowrap', fontWeight: 'bold' },
+    topBarCenter: { flex: 0 },
+    topBarMainText: { fontSize: isMobile ? '16px' : '20px', fontWeight: '1000', letterSpacing: '0.5px', whiteSpace: 'nowrap', color: '#1e293b' },
+    topBarRight: { display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: isMobile ? '4px' : '15px', position: 'relative', flexShrink: 0 },
+    avatar: { width: isMobile ? '28px' : '42px', height: isMobile ? '28px' : '42px', borderRadius: '50%', border: '1.5px solid #1e293b', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: '900', fontSize: isMobile ? '12px' : '18px', flexShrink: 0 },
+    notificationBadge: { position: 'absolute', top: '-4px', right: '-4px', backgroundColor: '#ef4444', color: 'white', fontSize: '11px', fontWeight: 'bold', borderRadius: '50%', width: '18px', height: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
+    notificationPanel: { position: 'absolute', top: '48px', right: '0', width: isMobile ? '250px' : '300px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 4px 20px rgba(0,0,0,0.1)', overflow: 'hidden', zIndex: 100 },
+    notificationItem: { padding: '12px 16px', borderBottom: '1px solid #f1f5f9', color: '#1e293b', fontSize: '12px', display: 'flex', gap: '10px', alignItems: 'center', backgroundColor: '#f8fafc' },
+
+    mainInfo: { padding: isMobile ? '10px 15px' : '16px 24px', color: '#64748b', fontSize: isMobile ? '10px' : '14px', textAlign: isMobile ? 'center' : 'left' },
+
+    gridCards: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? 'repeat(auto-fit, minmax(130px, 1fr))' : isTablet ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)',
+      gap: isMobile ? '12px' : '20px',
+      padding: isMobile ? '0 12px' : '0 32px',
+      marginBottom: isMobile ? '12px' : '32px'
+    },
+    statCard: { 
+      backgroundColor: 'white', 
+      borderRadius: '16px', 
+      padding: isMobile ? '12px' : '16px', 
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)', 
+      display: 'flex', 
+      flexDirection: 'column', 
+      gap: isMobile ? '8px' : '16px', 
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+      width: '100%', 
+      boxSizing: 'border-box',
+      border: '2px solid #bfdbfe'
+    },
+    iconWrapper: (color, bg) => ({ width: isMobile ? '32px' : '42px', height: isMobile ? '32px' : '42px', borderRadius: '12px', backgroundColor: bg, color: color, display: 'flex', alignItems: 'center', justifyContent: 'center', border: `1px solid ${color}20` }),
+    statLabel: { fontSize: isMobile ? '9px' : '11px', color: '#64748b', fontWeight: '800', letterSpacing: '0.4px', textTransform: 'uppercase' },
+    statValue: { fontSize: isMobile ? '16px' : '20px', fontWeight: '1000', color: '#0f172a' },
+
+    mainGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: isMobile ? '20px' : '32px', padding: isMobile ? '0 12px' : '0 32px' },
+    panel: { backgroundColor: 'white', borderRadius: isMobile ? '20px' : '24px', padding: isMobile ? '16px' : '20px', boxShadow: '0 20px 25px -5px rgba(0,0,0,0.04)', width: '100%', boxSizing: 'border-box', border: '2px solid #bfdbfe' },
+    panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: isMobile ? '10px' : '16px' },
+    panelTitle: { fontSize: isMobile ? '13px' : '14px', fontWeight: '1000', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '8px' },
+    panelAction: { fontSize: '8px', color: '#64748b', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' },
+
+    dockWrapper: {
+      width: '100%',
+      display: 'flex',
+      justifyContent: 'center',
+      padding: isMobile ? '20px 0 40px 0' : '40px 0',
+      marginTop: '20px'
+    },
+    dockContainer: {
+      backgroundColor: 'rgba(167, 214, 218, 0.85)', // glassmorphism adapted
+      borderRadius: '40px',
+      display: 'flex',
+      justifyContent: 'space-around',
+      alignItems: 'center',
+      padding: isMobile ? '10px 12px' : '10px 20px',
+      gap: isMobile ? '4px' : '20px',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
+      border: '1.5px solid rgba(255,255,255,0.4)',
+      backdropFilter: 'blur(15px)',
+      WebkitBackdropFilter: 'blur(15px)'
+    },
+    dockItem: (isActive) => ({ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', 
+      cursor: 'pointer', 
+      color: isActive ? '#0B1E3F' : 'rgba(11, 30, 63, 0.6)', 
+      transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+      flex: 1,
+      padding: isMobile ? '8px 4px' : '10px 8px',
+      borderRadius: '24px',
+      backgroundColor: 'transparent',
+      margin: '0 4px'
+    }),
+    dockText: { 
+      fontSize: isMobile ? '7px' : '8px', 
+      fontWeight: '900', 
+      fontFamily: "'Outfit', sans-serif",
+      marginTop: '3px',
+      letterSpacing: '0.3px'
+    }
+  };
+
+  const navItems = [
+    { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
+    { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
+    { id: 'leave', label: 'LEAVES', icon: Calendar },
+    { id: 'prizes', label: 'Prizes', icon: Trophy },
+    { id: 'thread', label: 'Thread', icon: MessageSquare },
+    { id: 'profile', label: 'Profile', icon: User }
+  ];
+
+  const [calendarItems, setCalendarItems] = useState([]);
+  const [stats, setStats] = useState({
+    workforce: 0,
+    teams: 0,
+    analytics: '0%',
+    running: 5,
+    completed: 3
+  });
+  const [employees, setEmployees] = useState([]);
+  const [teams, setTeams] = useState([]);
+  const [allTeams, setAllTeams] = useState([]);
+  const [suggestions, setSuggestions] = useState([]);
+  const [runningProjects, setRunningProjects] = useState([]);
+  const [completedProjects, setCompletedProjects] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     fetchDashboardData();
@@ -74,190 +244,171 @@ export default function HomeScreen() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const token = localStorage.getItem('token');
-      const headers = { 'Authorization': token ? `Bearer ${token}` : '' };
+      let token = localStorage.getItem('token');
+      if (token === 'undefined' || token === 'null') token = null;
+      const headers = { 'Authorization': token ? `Bearer ${token.trim()}` : '', 'Accept': 'application/json' };
 
-      // Fetch Workforce Count
-      const usersRes = await fetch(API_ENDPOINTS.USERS, { headers }).catch(() => null);
-      const usersData = usersRes && usersRes.ok ? await usersRes.json().catch(() => []) : [];
-      
-      // Fetch Teams for Projects
-      const teamsRes = await fetch(API_ENDPOINTS.TEAMS, { headers }).catch(() => null);
-      const teamsData = teamsRes && teamsRes.ok ? await teamsRes.json().catch(() => []) : [];
+      // Parallel fetch for all dashboard components
+      const [calendarRes, bdayRes, userRes, teamRes, sugRes, sugAdminRes] = await Promise.all([
+        fetch(API_ENDPOINTS.HOLIDAYS, { headers }).catch(() => null),
+        fetch(API_ENDPOINTS.BIRTHDAYS, { headers }).catch(() => null),
+        fetch(API_ENDPOINTS.USERS, { headers }).catch(() => null),
+        fetch(API_ENDPOINTS.TEAMS, { headers }).catch(() => null),
+        fetch(API_ENDPOINTS.SUGGESTIONS, { headers }).catch(() => null),
+        fetch(API_ENDPOINTS.SUGGESTIONS_ADMIN, { headers }).catch(() => null)
+      ]);
 
-      // Fetch Suggestions
-      const sugRes = await fetch(API_ENDPOINTS.SUGGESTIONS, { headers }).catch(() => null);
-      const sugData = sugRes && sugRes.ok ? await sugRes.json().catch(() => []) : [];
-      setSuggestions(Array.isArray(sugData) ? sugData.slice(0, 3) : []);
+      const safeJson = async (res) => {
+        try {
+          const text = await res.text();
+          return text ? JSON.parse(text) : null;
+        } catch { return null; }
+      };
 
-      // Fetch Holidays & Birthdays
-      const calRes = await fetch(API_ENDPOINTS.CALENDAR, { headers }).catch(() => null);
-      const calData = calRes && calRes.ok ? await calRes.json().catch(() => []) : [];
-      setCalendarItems(Array.isArray(calData) ? calData : []);
+      let uData = [];
+      let tData = [];
+      let sugData = [];
 
-      // Synchronize stats
-      const runningCount = teamsData.filter(t => (t.status || '').toLowerCase() !== 'completed' && (t.status || '').toLowerCase() !== 'closed').length;
-      const completedCount = teamsData.filter(t => (t.status || '').toLowerCase() === 'completed' || (t.status || '').toLowerCase() === 'closed').length;
+      let cal = [];
+      if (calendarRes?.ok) {
+        const hols = await safeJson(calendarRes);
+        if (hols && Array.isArray(hols)) cal = [...cal, ...hols.map(h => ({ ...h, type: 'holiday' }))];
+      }
+      if (bdayRes?.ok) {
+        const bdays = await safeJson(bdayRes);
+        if (bdays && Array.isArray(bdays)) {
+          cal = [...cal, ...bdays.map(b => {
+          const d = new Date(b.date);
+          const formattedDate = `${currentYear}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+          return { name: b.name, date: formattedDate, type: 'birthday' };
+        })];
+        }
+      }
+      setCalendarItems(cal.sort((a, b) => new Date(a.date) - new Date(b.date)));
+
+      if (userRes?.ok) {
+        uData = await safeJson(userRes) || [];
+        setEmployees(Array.isArray(uData) ? uData.slice(0, 3) : []);
+      }
+
+      if (teamRes?.ok) {
+        tData = await safeJson(teamRes) || [];
+        setAllTeams(tData);
+        setTeams(Array.isArray(tData) ? tData.slice(0, 3) : []);
+      }
+
+      if (sugRes?.ok || sugAdminRes?.ok) {
+        const d1 = sugRes?.ok ? await safeJson(sugRes) : [];
+        const d2 = sugAdminRes?.ok ? await safeJson(sugAdminRes) : [];
+        
+        const list1 = Array.isArray(d1) ? d1 : (d1?.data || d1?.suggestions || []);
+        const list2 = Array.isArray(d2) ? d2 : (d2?.data || d2?.suggestions || []);
+        
+        // Merge and de-duplicate
+        const combined = [...list1];
+        list2.forEach(item => {
+          const isDup = combined.some(ex => (ex.suggestion || ex.content || ex.id) === (item.suggestion || item.content || item.id));
+          if (!isDup) combined.push(item);
+        });
+        
+        sugData = combined;
+        setSuggestions(combined.slice(0, 3));
+      }
+
+      // Compute stats dynamically
+      const runningTeams = tData.filter(t => 
+        (t.status || '').toUpperCase().includes('ACTIVE') || 
+        (t.status || '').toUpperCase().includes('RUNNING') ||
+        (t.status || '').toUpperCase().includes('IN PROGRESS') ||
+        ((t.progress || 0) > 0 && (t.progress || 0) < 100)
+      );
+
+      const doneTeams = tData.filter(t => 
+        (t.status || '').toUpperCase().includes('COMPLETED') || 
+        (t.progress || 0) >= 100
+      );
+
+      setRunningProjects(runningTeams);
+      setCompletedProjects(doneTeams);
 
       setStats({
-        workforce: Array.isArray(usersData) ? usersData.length : 0,
-        running: runningCount,
-        completed: completedCount,
-        suggestions: Array.isArray(sugData) ? sugData.length : 0
+        workforce: Array.isArray(uData) ? uData.length : 0,
+        teams: Array.isArray(tData) ? tData.length : 0,
+        analytics: '98%',
+        running: 5,
+        completed: 3
       });
 
-    } catch (error) {
-      console.error("Dashboard Sync Error:", error);
+    } catch (err) {
+      console.error("Dashboard fetch error:", err);
     } finally {
       setLoading(false);
     }
   };
+  // Data fetching handled by fetchDashboardData
+  const [loadingCalendar, setLoadingCalendar] = useState(false);
+  const loadingDashboard = loading;
 
   const isPassed = (dateStr) => {
-    if (!dateStr) return false;
-    const d = new Date(dateStr);
     const today = new Date();
-    today.setHours(0,0,0,0);
-    return d < today;
+    today.setHours(0, 0, 0, 0);
+    const eventDate = new Date(dateStr);
+    eventDate.setHours(0, 0, 0, 0);
+    return eventDate < today;
   };
 
-  const styles = {
-    container: { display: 'flex', height: '100vh', backgroundColor: '#F8FAFC', color: '#1e293b', overflow: 'hidden' },
-    sidebar: { 
-      width: isSidebarOpen ? (isMobile ? '100%' : '280px') : '0px', 
-      backgroundColor: '#0B1E3F', 
-      height: '100%', 
-      transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-      overflow: 'hidden', 
-      display: 'flex', 
-      flexDirection: 'column',
-      zIndex: 2000,
-      position: isMobile ? 'fixed' : 'relative',
-      boxShadow: isSidebarOpen ? '20px 0 50px rgba(0,0,0,0.1)' : 'none'
-    },
-    main: { flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', position: 'relative' },
-    header: { 
-      height: '80px', 
-      backgroundColor: 'rgba(255, 255, 255, 0.8)', 
-      backdropFilter: 'blur(10px)',
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'space-between', 
-      padding: '0 30px', 
-      borderBottom: '1px solid #eef2f6',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000
-    },
-    navItem: (active) => ({ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '12px', 
-      padding: '14px 20px', 
-      margin: '4px 15px',
-      borderRadius: '12px', 
-      cursor: 'pointer', 
-      backgroundColor: active ? 'rgba(255,255,255,0.1)' : 'transparent',
-      color: active ? 'white' : '#94a3b8',
-      fontWeight: active ? '700' : '500',
-      transition: '0.2s'
-    }),
-    statCard: { 
-      backgroundColor: 'white', 
-      padding: '24px', 
-      borderRadius: '24px', 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '20px', 
-      boxShadow: '0 4px 6px rgba(0,0,0,0.02)', 
-      border: '1px solid #eef2f6',
-      cursor: 'pointer',
-      transition: 'all 0.3s ease'
-    },
-    iconWrapper: (color, bg) => ({ 
-      width: '48px', 
-      height: '48px', 
-      borderRadius: '14px', 
-      backgroundColor: bg, 
-      color: color, 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center',
-      flexShrink: 0
-    }),
-    statLabel: { fontSize: '12px', color: '#64748b', fontWeight: '600', textTransform: 'uppercase', letterSpacing: '0.5px' },
-    statValue: { fontSize: '24px', fontWeight: '900', color: '#1e293b', marginTop: '2px' },
-    mainGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '24px' },
-    panel: { backgroundColor: 'white', padding: '30px', borderRadius: '32px', border: '1px solid #eef2f6', boxShadow: '0 10px 30px rgba(0,0,0,0.03)' },
-    panelHeader: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '25px' },
-    panelTitle: { fontSize: '18px', fontWeight: '900', display: 'flex', alignItems: 'center', gap: '10px' },
-    panelAction: { fontSize: '11px', fontWeight: '800', cursor: 'pointer', letterSpacing: '1px' },
-    zoomedPanel: {
-      position: 'relative',
-      zIndex: 50,
-      border: '3px solid #3b82f6',
-      boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)'
-    }
+  const isToday = (dateStr) => {
+    const today = new Date();
+    const d = new Date(dateStr);
+    return today.getDate() === d.getDate() && today.getMonth() === d.getMonth();
   };
 
   const renderDashboard = () => (
-    <div 
-      style={{ padding: isMobile ? '20px' : '40px', maxWidth: '1400px', margin: '0 auto', width: '100%', boxSizing: 'border-box' }}
-      onClick={() => setSelectedCardId(null)}
-    >
-      <div style={{ marginBottom: '40px' }}>
-        <h1 style={{ fontSize: isMobile ? '24px' : '32px', fontWeight: '1000', color: '#0B1E3F', margin: 0 }}>System Overview</h1>
-        <p style={{ color: '#64748b', marginTop: '8px', fontWeight: '500' }}>{new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '100%' }}>
 
-      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+      <div style={styles.gridCards}>
         <div 
-          style={styles.statCard} 
-          onClick={(e) => { e.stopPropagation(); setActiveTab('users'); }}
+          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'users' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('users')}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <div style={styles.iconWrapper('#3b82f6', '#eff6ff')}><Users size={18} /></div>
-          <div><div style={styles.statLabel}>Employees</div><div style={styles.statValue}>{stats.workforce || 0}</div></div>
+          <div style={styles.iconWrapper('#6366f1', '#e0e7ff')}><Users size={24} /></div>
+          <div><div style={styles.statLabel}>Employees</div><div style={styles.statValue}>{stats.workforce || employees.length || 0}</div></div>
         </div>
         <div 
-          style={styles.statCard} 
-          onClick={(e) => { e.stopPropagation(); setActiveTab('running'); }}
+          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'teams' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('teams')}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
-          <div style={styles.iconWrapper('#f59e0b', '#fffbeb')}><Briefcase size={18} /></div>
+          <div style={styles.iconWrapper('#8b5cf6', '#ede9fe')}><Layers size={24} /></div>
+          <div><div style={styles.statLabel}>Total Teams</div><div style={styles.statValue}>{stats.teams || teams.length || 0}</div></div>
+        </div>
+
+        <div 
+          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'running' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('running')}
+          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
+          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
+        >
+          <div style={styles.iconWrapper('#3b82f6', '#dbeafe')}><Activity size={18} /></div>
           <div><div style={styles.statLabel}>Running</div><div style={styles.statValue}>{stats.running || 0}</div></div>
         </div>
         <div 
-          style={styles.statCard} 
-          onClick={(e) => { e.stopPropagation(); setActiveTab('completed'); }}
+          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'completed' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+          onClick={() => setActiveTab('completed')}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
           <div style={styles.iconWrapper('#10b981', '#dcfce7')}><CheckSquare size={18} /></div>
           <div><div style={styles.statLabel}>Completed</div><div style={styles.statValue}>{stats.completed || 0}</div></div>
         </div>
-        <div 
-          style={styles.statCard} 
-          onClick={(e) => { e.stopPropagation(); setActiveTab('suggestions'); }}
-          onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
-          onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
-        >
-          <div style={styles.iconWrapper('#8b5cf6', '#f5f3ff')}><MessageSquare size={18} /></div>
-          <div><div style={styles.statLabel}>Suggestions</div><div style={styles.statValue}>{stats.suggestions || 0}</div></div>
-        </div>
       </div>
 
       <div style={styles.mainGrid}>
         {/* Birthdays Panel */}
-        <motion.div 
-          layout
-          onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === 'birthdays' ? null : 'birthdays'); }}
-          animate={{ scale: selectedCardId === 'birthdays' ? 1.05 : 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          style={{...styles.panel, display: 'flex', flexDirection: 'column', cursor: 'pointer', ...(selectedCardId === 'birthdays' ? styles.zoomedPanel : {})}}
-        >
+        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#E11D48' }}>
               <Gift size={isMobile ? 18 : 24} /> Birthdays
@@ -291,7 +442,7 @@ export default function HomeScreen() {
           </div>
           <button 
             type="button"
-            onClick={(e) => { e.stopPropagation(); setActiveTab('birthdays'); }}
+            onClick={() => setActiveTab('birthdays')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FFE4E6'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFF1F2'; e.currentTarget.style.transform = 'translateY(0)'; }}
             style={{ 
@@ -304,16 +455,10 @@ export default function HomeScreen() {
           >
             MORE CELEBRATIONS
           </button>
-        </motion.div>
+        </div>
 
         {/* Holidays Panel */}
-        <motion.div 
-          layout
-          onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === 'holidays' ? null : 'holidays'); }}
-          animate={{ scale: selectedCardId === 'holidays' ? 1.05 : 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          style={{...styles.panel, display: 'flex', flexDirection: 'column', cursor: 'pointer', ...(selectedCardId === 'holidays' ? styles.zoomedPanel : {})}}
-        >
+        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#D97706' }}>
               <Calendar size={isMobile ? 18 : 24} /> Holidays
@@ -348,7 +493,7 @@ export default function HomeScreen() {
           </div>
           <button 
             type="button"
-            onClick={(e) => { e.stopPropagation(); setActiveTab('holidays'); }}
+            onClick={() => setActiveTab('holidays')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FEF3C7'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFBEB'; e.currentTarget.style.transform = 'translateY(0)'; }}
             style={{ 
@@ -361,20 +506,14 @@ export default function HomeScreen() {
           >
             MORE HOLIDAYS
           </button>
-        </motion.div>
+        </div>
       </div>
 
 
 
       <div style={{ ...styles.mainGrid, marginTop: '24px', flex: 1 }}>
         {/* Analytics Panel */}
-        <motion.div 
-          layout
-          onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === 'analytics' ? null : 'analytics'); }}
-          animate={{ scale: selectedCardId === 'analytics' ? 1.05 : 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          style={{...styles.panel, display: 'flex', flexDirection: 'column', cursor: 'pointer', ...(selectedCardId === 'analytics' ? styles.zoomedPanel : {})}}
-        >
+        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#10B981' }}>
               <BarChart2 size={isMobile ? 18 : 24} /> Platform Analytics
@@ -406,7 +545,7 @@ export default function HomeScreen() {
           </div>
           <button 
             type="button"
-            onClick={(e) => { e.stopPropagation(); setActiveTab('analytics'); }}
+            onClick={() => setActiveTab('analytics')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#DCFCE7'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F0FDF4'; e.currentTarget.style.transform = 'translateY(0)'; }}
             style={{ 
@@ -419,16 +558,10 @@ export default function HomeScreen() {
           >
             MORE ANALYTICS
           </button>
-        </motion.div>
+        </div>
 
         {/* Suggestions Panel */}
-        <motion.div 
-          layout
-          onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === 'suggestions' ? null : 'suggestions'); }}
-          animate={{ scale: selectedCardId === 'suggestions' ? 1.05 : 1 }}
-          transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          style={{...styles.panel, display: 'flex', flexDirection: 'column', cursor: 'pointer', ...(selectedCardId === 'suggestions' ? styles.zoomedPanel : {})}}
-        >
+        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#F59E0B' }}>
               <MessageSquare size={isMobile ? 18 : 24} /> Suggestions
@@ -452,7 +585,7 @@ export default function HomeScreen() {
           </div>
           <button 
             type="button"
-            onClick={(e) => { e.stopPropagation(); setActiveTab('suggestions'); }}
+            onClick={() => setActiveTab('suggestions')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FDE68A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FEF3C7'; e.currentTarget.style.transform = 'translateY(0)'; }}
             style={{ 
@@ -465,7 +598,7 @@ export default function HomeScreen() {
           >
             MORE SUGGESTIONS
           </button>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
@@ -484,7 +617,10 @@ export default function HomeScreen() {
     switch (activeTab) {
       case 'users': return <UserManagement onBack={handleBack} />;
       case 'teams': return <TeamAndProjectOverview onBack={handleBack} />;
+      case 'roles': return <RoleManagement onBack={handleBack} />;
       case 'analytics': return <AnalyticsDashboard onBack={handleBack} />;
+      case 'courses': return <CourseManagement onBack={handleBack} />;
+      case 'thread': return <ThreadModule onBack={handleBack} />;
       case 'suggestions': return <SuggestionDashboard onBack={handleBack} />;
       case 'system_logs': return <SystemLogs onBack={handleBack} />;
       case 'prizes': return <RewardsModule onBack={handleBack} />;
@@ -514,36 +650,31 @@ export default function HomeScreen() {
                 <motion.div 
                   key={i} 
                   layout
-                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === `run-${i}` ? null : `run-${i}`); }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
                   animate={{ 
-                    scale: selectedCardId === `run-${i}` ? 1.05 : 1,
-                    zIndex: selectedCardId === `run-${i}` ? 50 : 1
+                    scale: selectedCardId === p.name ? 1.08 : 1,
+                    zIndex: selectedCardId === p.name ? 50 : 1,
+                    boxShadow: selectedCardId === p.name ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   style={{ 
                     backgroundColor: 'white', 
-                    padding: '25px', 
+                    padding: '24px', 
                     borderRadius: '24px', 
-                    boxShadow: selectedCardId === `run-${i}` ? '0 30px 60px rgba(0,0,0,0.12)' : '0 10px 30px rgba(0,0,0,0.04)', 
-                    border: selectedCardId === `run-${i}` ? '3px solid #3b82f6' : '1.5px solid #eef2f6',
+                    border: '3px solid #bfdbfe',
                     cursor: 'pointer',
                     position: 'relative'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#0B1E3F' }}>{p.name}</h4>
-                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Lead: {p.lead}</p>
-                    </div>
-                    <span style={{ fontSize: '10px', fontWeight: '800', padding: '5px 10px', borderRadius: '8px', backgroundColor: p.status === 'Active' ? '#f0fdf4' : '#eff6ff', color: p.status === 'Active' ? '#22c55e' : '#3b82f6', textTransform: 'uppercase' }}>{p.status}</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <div style={{ fontWeight: '1000', fontSize: '18px', color: '#1e293b' }}>{p.name}</div>
+                    <div style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '5px 12px', borderRadius: '10px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}>{p.status}</div>
                   </div>
-                  <div style={{ marginBottom: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '12px', fontWeight: '800', color: '#64748b' }}>Overall Progress</span>
-                    <span style={{ fontSize: '14px', fontWeight: '900', color: '#3b82f6' }}>{p.progress}%</span>
+                  <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700', marginBottom: '15px' }}>Lead: {p.lead}</div>
+                  <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '10px', overflow: 'hidden' }}>
+                    <div style={{ width: `${p.progress}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', borderRadius: '10px' }}></div>
                   </div>
-                  <div style={{ height: '8px', backgroundColor: '#f1f5f9', borderRadius: '10px', overflow: 'hidden' }}>
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${p.progress}%` }} transition={{ duration: 1 }} style={{ height: '100%', backgroundColor: '#3b82f6' }} />
-                  </div>
+                  <div style={{ textAlign: 'right', fontSize: '10px', fontWeight: '950', color: '#3b82f6', marginTop: '8px' }}>{p.progress}% COMPLETE</div>
                 </motion.div>
               ))}
             </div>
@@ -559,139 +690,156 @@ export default function HomeScreen() {
               <div onClick={handleBack} style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #eef2f6' }}><ArrowLeft size={20} color="#64748b" /></div>
               <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Completed Projects</h2>
             </div>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(350px, 1fr))' }}>
+            <div style={{ display: 'grid', gap: '30px', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(450px, 1fr))' }}>
               {[
-                { name: 'JKD Mart', lead: 'Santhosha A', status: 'Completed', date: '2025-05-15' },
-                { name: 'Tokens Boy', lead: 'Namith Gowda', status: 'Completed', date: '2025-04-20' },
-                { name: 'Quantum Coders', lead: 'Namith Gowda', status: 'Completed', date: '2025-06-10' }
+                { name: 'Quantum Coders', lead: 'Namith Gowda', status: 'Completed' },
+                { name: 'JKD Mart', lead: 'Santosh', status: 'Completed' },
+                { name: 'Tokens Boy', lead: 'Namith', status: 'Completed' }
               ].map((p, i) => (
                 <motion.div 
                   key={i} 
                   layout
-                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === `comp-${i}` ? null : `comp-${i}`); }}
+                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
                   animate={{ 
-                    scale: selectedCardId === `comp-${i}` ? 1.05 : 1,
-                    zIndex: selectedCardId === `comp-${i}` ? 50 : 1
+                    scale: selectedCardId === p.name ? 1.08 : 1,
+                    zIndex: selectedCardId === p.name ? 50 : 1,
+                    boxShadow: selectedCardId === p.name ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   style={{ 
                     backgroundColor: 'white', 
-                    padding: '25px', 
-                    borderRadius: '24px', 
-                    boxShadow: selectedCardId === `comp-${i}` ? '0 30px 60px rgba(0,0,0,0.12)' : '0 10px 30px rgba(0,0,0,0.04)', 
-                    border: selectedCardId === `comp-${i}` ? '3px solid #10b981' : '1.5px solid #eef2f6',
+                    padding: '40px', 
+                    borderRadius: '32px', 
+                    border: '4px solid #dcfce7',
                     cursor: 'pointer',
                     position: 'relative'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                    <div>
-                      <h4 style={{ margin: 0, fontSize: '18px', fontWeight: '900', color: '#0B1E3F' }}>{p.name}</h4>
-                      <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#64748b', fontWeight: '600' }}>Team Lead: {p.lead}</p>
-                    </div>
-                    <div style={{ textAlign: 'right' }}>
-                      <span style={{ fontSize: '10px', fontWeight: '800', padding: '5px 10px', borderRadius: '8px', backgroundColor: '#f0fdf4', color: '#10b981', textTransform: 'uppercase' }}>{p.status}</span>
-                      <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#94a3b8', fontWeight: '700' }}>Finished on {p.date}</p>
-                    </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div style={{ fontWeight: '1000', fontSize: '24px', color: '#1e293b' }}>{p.name}</div>
+                    <div style={{ backgroundColor: '#dcfce7', color: '#10b981', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: '900', textTransform: 'uppercase' }}>{p.status}</div>
                   </div>
+                  <div style={{ fontSize: '16px', color: '#64748b', fontWeight: '800' }}>Team Lead: {p.lead}</div>
                 </motion.div>
               ))}
             </div>
           </div>
         );
-      default: return renderDashboard();
+      case 'profile': return <ProfileScreen onBack={handleBack} />;
+      case 'dashboard':
+      default:
+        return renderDashboard();
     }
   };
 
   return (
-    <div style={styles.container}>
-      <div style={styles.sidebar}>
-        <div style={{ padding: '30px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <div style={{ width: '40px', height: '40px', borderRadius: '12px', backgroundColor: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white' }}>
-              <Layout size={20} />
-            </div>
-            {isSidebarOpen && <span style={{ color: 'white', fontWeight: '900', fontSize: '18px', letterSpacing: '0.5px' }}>NBT HUB</span>}
+    <div style={styles.layout}>
+      <header style={styles.topBar}>
+        <div 
+          style={{ ...styles.topBarLeft, cursor: 'pointer' }} 
+          onClick={() => setActiveTab('dashboard')}
+          title="Go to Dashboard"
+        >
+          <img src={logoImg} style={{ height: isMobile ? '70px' : '95px', minWidth: isMobile ? '70px' : '95px', objectFit: 'contain', flexShrink: 0, padding: '4px' }} alt="Logo" />
+          <div style={{ ...styles.topBarMainText, marginLeft: isMobile ? '8px' : '12px' }}>NBT HUB</div>
+        </div>
+
+        <div style={styles.topBarCenter}>
+          {/* Center is now flexible spacing */}
+        </div>
+
+        <div style={styles.topBarRight}>
+          <div style={{ marginRight: isMobile ? '5px' : '10px', textAlign: 'right' }}>
+            <div style={styles.topBarTitle}>{user?.name || 'User'}</div>
+            <div style={styles.topBarRole}>{user?.role || 'Super Admin'}</div>
           </div>
-          {isMobile && <X color="white" onClick={() => setIsSidebarOpen(false)} />}
-        </div>
 
-        <div style={{ flex: 1, overflowY: 'auto', paddingTop: '20px' }}>
-          {[
-            { id: 'dashboard', icon: Layout, label: 'Dashboard' },
-            { id: 'users', icon: Users, label: 'Employees' },
-            { id: 'teams', icon: Briefcase, label: 'Teams & Projects' },
-            { id: 'attendance', icon: UserCheck, label: 'Attendance' },
-            { id: 'leave', icon: Calendar, label: 'Leave Manager' },
-            { id: 'prizes', icon: Target, label: 'Rewards' },
-            { id: 'analytics', icon: BarChart2, label: 'Analytics' },
-            { id: 'suggestions', icon: MessageSquare, label: 'Feedback' },
-            { id: 'system_logs', icon: FileText, label: 'Activity Logs' }
-          ].map(item => (
-            <div key={item.id} style={styles.navItem(activeTab === item.id)} onClick={() => { setActiveTab(item.id); if (isMobile) setIsSidebarOpen(false); }}>
-              <item.icon size={20} />
-              {isSidebarOpen && item.label}
-            </div>
-          ))}
-        </div>
-
-        <div style={{ padding: '20px', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={styles.navItem(false)} onClick={() => { logout(); setActiveTab('dashboard'); }}>
-            <LogOut size={20} />
-            {isSidebarOpen && 'Logout Session'}
+          <div onClick={() => setActiveTab('profile')} style={{ ...styles.avatar, cursor: 'pointer', overflow: 'hidden' }}>
+            {profileImg ? (
+              <img src={profileImg} alt="Dinesh" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : 'D'}
           </div>
-        </div>
-      </div>
 
-      <div style={styles.main}>
-        <header style={styles.header}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
-            <div 
-              style={{ cursor: 'pointer', padding: '10px', borderRadius: '12px', backgroundColor: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-              onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          <button
+            onClick={logout}
+            style={{
+              width: isMobile ? '28px' : '32px',
+              height: isMobile ? '28px' : '32px',
+              borderRadius: '10px',
+              backgroundColor: 'rgba(30,41,59,0.05)',
+              border: '1px solid rgba(30,41,59,0.15)',
+              color: '#1e293b',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              cursor: 'pointer',
+              flexShrink: 0,
+              transition: 'all 0.2s',
+              marginLeft: isMobile ? '4px' : '8px'
+            }}
+            title="Logout"
+          >
+            <LogOut size={isMobile ? 14 : 18} color="#1e293b" />
+          </button>
+        </div>
+      </header>
+
+      <main ref={scrollRef} style={styles.mainContent}>
+        <div style={{ paddingBottom: isMobile ? '20px' : '40px' }}>
+          {renderContent()}
+        </div>
+
+        <AnimatePresence>
+          {showDock && (
+            <motion.footer 
+              style={styles.dockWrapper}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: 20 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
             >
-              <Menu size={20} color="#0B1E3F" />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }} onClick={() => setActiveTab('dashboard')}>
-              <Layout size={24} color="#0B1E3F" />
-              <span style={{ fontWeight: '1000', fontSize: '20px', color: '#0B1E3F' }}>ADMIN PANEL</span>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
-            {!isMobile && (
-              <div style={{ position: 'relative', width: '300px' }}>
-                <Search size={18} style={{ position: 'absolute', left: '15px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
-                <input style={{ width: '100%', padding: '12px 15px 12px 45px', borderRadius: '14px', border: '1.5px solid #eef2f6', outline: 'none', fontSize: '13px', fontWeight: '600' }} placeholder="Quick search..." />
-              </div>
-            )}
-            <div style={{ position: 'relative' }}>
-              <Bell size={22} color="#0B1E3F" />
-              <div style={{ position: 'absolute', top: '-2px', right: '-2px', width: '8px', height: '8px', backgroundColor: '#ef4444', borderRadius: '50%', border: '2px solid white' }} />
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '6px 12px', backgroundColor: '#f1f5f9', borderRadius: '15px' }}>
-              <div style={{ width: '35px', height: '35px', borderRadius: '10px', backgroundColor: '#0B1E3F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '900' }}>
-                {profileImg ? <img src={profileImg} style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} /> : 'S'}
-              </div>
-              {!isMobile && (
-                <div>
-                  <div style={{ fontSize: '13px', fontWeight: '900', color: '#0B1E3F' }}>Sinchana H S</div>
-                  <div style={{ fontSize: '10px', color: '#64748b', fontWeight: '700' }}>Super Admin</div>
-                </div>
-              )}
-            </div>
-          </div>
-        </header>
-
-        <div style={{ flex: 1, overflowY: 'auto' }}>
-          {loading ? (
-            <div style={{ display: 'flex', height: '100%', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '20px' }}>
-              <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: 'linear' }} style={{ width: '40px', height: '40px', border: '4px solid #f1f5f9', borderTop: '4px solid #3b82f6', borderRadius: '50%' }} />
-              <span style={{ fontWeight: '800', color: '#64748b', fontSize: '14px' }}>Loading Admin Console...</span>
-            </div>
-          ) : renderContent()}
-        </div>
-      </div>
+              <nav style={styles.dockContainer}>
+                {navItems.map(item => {
+                  const Icon = item.icon;
+                  const isActive = activeTab === item.id;
+                  return (
+                    <div key={item.id} style={styles.dockItem(isActive)} onClick={() => setActiveTab(item.id)}>
+                      <div style={{ position: 'relative' }}>
+                        <Icon size={isMobile ? 20 : 22} style={{ strokeWidth: '2.5px' }} />
+                        
+                        {item.id === 'thread' && unreadCount > 0 && (
+                          <div style={{
+                            position: 'absolute',
+                            top: '-8px',
+                            right: '-8px',
+                            backgroundColor: '#FF0000',
+                            color: 'white',
+                            fontSize: '9px',
+                            fontWeight: '1000',
+                            borderRadius: '10px',
+                            minWidth: '16px',
+                            height: '16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            border: '2px solid white',
+                            boxShadow: '0 4px 10px rgba(239, 68, 68, 0.5)',
+                            zIndex: 9999,
+                            padding: '0 4px'
+                          }}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                          </div>
+                        )}
+                      </div>
+                      <span style={styles.dockText}>{item.label}</span>
+                    </div>
+                  );
+                })}
+              </nav>
+            </motion.footer>
+          )}
+        </AnimatePresence>
+      </main>
     </div>
   );
 }
