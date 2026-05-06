@@ -104,75 +104,14 @@ export default function ProfileScreen({ onBack }) {
     finally { setIsSyncing(false); }
   };
 
-  // ── Profile text field sync — PUT /api/profile/update ──────────────────────
-  const syncProfileUpdate = async (type, val) => {
-     // Save locally immediately so it survives refresh
-     const localKeyMap = {
-       phone: 'phone_number', dob: 'date_of_birth',
-       aboutMe: 'about_me', employeeId: 'employee_id', team: 'team',
-     };
-     if (localKeyMap[type]) saveLocalProfile({ [localKeyMap[type]]: val });
-
-     // Convert DD/MM/YYYY → YYYY-MM-DD for date
-     let formattedVal = val;
-     if (type === 'dob' && val && val.includes('/')) {
-        const parts = val.split('/');
-        if (parts.length === 3) formattedVal = `${parts[2]}-${parts[1]}-${parts[0]}`;
-     }
-
-     // Build payload — same pattern that worked for image upload
-     const payloadBase = {
-       email: user?.email,
-       id: user?.id || user?.employee_id,
-     };
-
-     const fieldVariants = {
-       phone:      { phone_number: formattedVal, phone: formattedVal, phoneNumber: formattedVal },
-       dob:        { date_of_birth: formattedVal, dob: formattedVal, dateOfBirth: formattedVal },
-       aboutMe:    { about_me: formattedVal, aboutMe: formattedVal, description: formattedVal, bio: formattedVal },
-       employeeId: { employee_id: formattedVal, employeeId: formattedVal },
-       team:       { team: formattedVal, teamName: formattedVal },
-     };
-
-     const payload = { ...payloadBase, ...(fieldVariants[type] || {}) };
-
-     console.log(`Sending ${type} to backend:`, payload);
-
-     const rawToken = user?.token || localStorage.getItem('token');
-     const token = String(rawToken || '').trim();
-     try {
-        const res = await fetch(API_ENDPOINTS.PROFILE_UPDATE, {
-           method: 'PUT',
-           headers: {
-             'Content-Type': 'application/json',
-             'Authorization': token && token !== 'undefined' && token !== 'null' ? `Bearer ${token}` : '',
-             'Accept': 'application/json'
-           },
-           body: JSON.stringify(payload)
-        });
-        if (res.ok) {
-           console.log(`✅ ${type} saved to database.`);
-           if (type === 'aboutMe') alert('Description saved to database successfully!');
-        } else {
-           const err = await res.json().catch(() => ({}));
-           alert(`Failed to save ${type}. Server error: HTTP ${res.status} — ${err.message || 'Unknown error'}`);
-        }
-     } catch (err) {
-        alert(`Network error saving ${type}: ${err.message}`);
-     }
-  };
-
-  // ── Profile image upload — PUT /api/profile/update (FormData) ──────────────
   const handleImageChange = async (e) => {
      const file = e.target.files[0];
      if (!file) return;
 
-     // 1. Show immediate full preview
      const rawReader = new FileReader();
      rawReader.onloadend = () => setProfileImage(rawReader.result);
      rawReader.readAsDataURL(file);
 
-     // 2. Compress and upload
      try {
         const compressImage = (file, maxWidthPx = 800, quality = 0.7) => {
            return new Promise((resolve) => {
@@ -240,30 +179,25 @@ export default function ProfileScreen({ onBack }) {
   const isSmallMobile = winWidth < 480;
 
   const styles = {
-    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: '160px', paddingTop: '30px', fontFamily: 'system-ui, -apple-system, sans-serif' },
-    profileWrapper: { maxWidth: '1200px', margin: '0 auto', padding: '0 20px' },
-    banner: { height: '160px', backgroundColor: '#0B1E3F', borderRadius: '0 0 24px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center' },
-    bannerText: { color: '#FFFFFF', fontSize: '18px', fontWeight: '800', letterSpacing: '0.5px', textAlign: 'center', textTransform: 'capitalize' },
-    masterCard: { backgroundColor: 'white', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.1)', padding: '35px', position: 'relative', marginTop: '-40px', border: '1px solid #F1F5F9' },
-    headerRow: { display: 'flex', justifyContent: 'flex-start', alignItems: 'center', flexWrap: 'wrap', gap: '60px', paddingBottom: '25px' },
+    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: isMobile ? '120px' : '160px', paddingTop: isMobile ? '15px' : '30px', fontFamily: "'Outfit', sans-serif" },
+    profileWrapper: { maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '0 15px' : '0 20px' },
+    banner: { height: isMobile ? '120px' : '160px', backgroundColor: '#0B1E3F', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
+    bannerText: { color: '#FFFFFF', fontSize: isMobile ? '14px' : '18px', fontWeight: '800', letterSpacing: '0.5px', textAlign: 'center', zIndex: 1 },
+    masterCard: { backgroundColor: 'white', borderRadius: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.05)', padding: isMobile ? '25px 20px' : '35px', position: 'relative', marginTop: '-40px', border: '1px solid #F1F5F9', zIndex: 2 },
+    headerRow: { display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'flex-start', alignItems: isMobile ? 'flex-start' : 'center', flexWrap: 'wrap', gap: isMobile ? '25px' : '60px', paddingBottom: '25px', borderBottom: '1px solid #f1f5f9', marginBottom: '25px' },
     avatarContainer: { position: 'relative' },
-    avatar: { width: '80px', height: '80px', borderRadius: '16px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px', color: '#2563EB', fontWeight: '800', overflow: 'hidden' },
-    editAvatarBtn: { position: 'absolute', bottom: '-5px', right: '-5px', backgroundColor: 'white', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1px solid #e2e8f0', color: '#64748b' },
-    userName: { fontSize: '20px', fontWeight: '1000', color: '#0B1E3F', margin: '0' },
-    userRole: { fontSize: '10px', color: '#2563EB', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' },
-    managerBox: { backgroundColor: '#F8FAFC', padding: '10px 15px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '10px' },
-    managerLabel: { fontSize: '9px', color: '#94A3B8', fontWeight: '800', textTransform: 'uppercase' },
-    managerName: { fontSize: '12px', color: '#0B1E3F', fontWeight: '900' },
-    infoGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: '15px', marginTop: '20px' },
-    infoCard: { backgroundColor: '#F5F9FF', padding: '25px', borderRadius: '20px', border: '1px solid #E0EFFF', display: 'flex', alignItems: 'center', gap: '20px', transition: 'transform 0.2s' },
-    iconCircle: { width: '50px', height: '50px', borderRadius: '15px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', boxShadow: '0 2px 6px rgba(37, 99, 235, 0.08)' },
-    label: { fontSize: '11px', color: '#64748B', fontWeight: '800', letterSpacing: '0.2px' },
-    value: { fontSize: '15px', color: '#0B1E3F', fontWeight: '1000', marginTop: '4px' },
-    aboutSection: { marginTop: '30px', backgroundColor: '#F5F9FF', padding: '30px', borderRadius: '24px', border: '1px solid #E0EFFF' },
-    logoutBtn: { marginTop: '50px', padding: '15px 60px', borderRadius: '16px', border: '2px solid #EF4444', backgroundColor: 'white', color: '#EF4444', fontSize: '14px', fontWeight: '1000', cursor: 'pointer', display: 'block', margin: '50px auto 0', transition: 'all 0.2s', boxShadow: '0 10px 20px rgba(239, 68, 68, 0.1)' }
+    avatar: { width: isMobile ? '80px' : '100px', height: isMobile ? '80px' : '100px', borderRadius: '20px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', color: '#2563EB', fontWeight: '800', overflow: 'hidden' },
+    editAvatarBtn: { position: 'absolute', bottom: '-5px', right: '-5px', backgroundColor: 'white', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1px solid #e2e8f0', color: '#2563EB' },
+    userName: { fontSize: isMobile ? '24px' : '28px', fontWeight: '1000', color: '#0B1E3F', margin: '0', letterSpacing: '-0.5px' },
+    userRole: { fontSize: '11px', color: '#2563EB', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' },
+    infoGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: isMobile ? '12px' : '20px' },
+    infoCard: { backgroundColor: '#F5F9FF', padding: isMobile ? '18px' : '25px', borderRadius: '20px', border: '1.5px solid #E0EFFF', display: 'flex', alignItems: 'center', gap: '15px' },
+    iconCircle: { width: isMobile ? '40px' : '50px', height: isMobile ? '40px' : '50px', borderRadius: '14px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', boxShadow: '0 2px 8px rgba(37, 99, 235, 0.05)', flexShrink: 0 },
+    label: { fontSize: '10px', color: '#64748B', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' },
+    value: { fontSize: isMobile ? '14px' : '16px', color: '#0B1E3F', fontWeight: '1000', marginTop: '2px' },
+    aboutSection: { marginTop: '25px', backgroundColor: '#f8fafc', padding: isMobile ? '20px' : '30px', borderRadius: '20px', border: '1px solid #f1f5f9' },
+    logoutBtn: { width: isMobile ? '100%' : 'auto', padding: '15px 40px', borderRadius: '16px', border: '2px solid #EF4444', backgroundColor: 'white', color: '#EF4444', fontSize: '14px', fontWeight: '1000', cursor: 'pointer', display: 'block', margin: '40px auto 0', transition: 'all 0.2s' }
   };
-
-
 
   return (
     <div style={styles.container}>
@@ -273,48 +207,71 @@ export default function ProfileScreen({ onBack }) {
         {onBack && (
           <div 
             onClick={onBack} 
-            style={{ cursor: 'pointer', backgroundColor: 'white', width: '40px', height: '40px', borderRadius: '12px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f1f5f9', marginBottom: '15px' }}
+            style={{ cursor: 'pointer', backgroundColor: 'white', width: '36px', height: '36px', borderRadius: '10px', boxShadow: '0 4px 10px rgba(0,0,0,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f1f5f9', marginBottom: '12px' }}
           >
-            <ArrowLeft size={20} color="#0B1E3F" />
+            <ArrowLeft size={18} color="#0B1E3F" />
           </div>
         )}
         <div style={styles.banner}>
-          <div style={styles.bannerText}>Smarter solutions for better future</div>
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)', opacity: 0.5 }}></div>
+          <div style={styles.bannerText}>Innovation • Excellence • Impact</div>
         </div>
 
         <div style={styles.masterCard}>
           <div style={styles.headerRow}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '20px', width: isMobile ? '100%' : 'auto' }}>
               <div style={styles.avatarContainer}>
                 <div style={styles.avatar}>
                   {profileImage ? <img src={profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : (user?.name ? user.name[0] : 'S')}
                 </div>
-                <button onClick={() => fileInputRef.current?.click()} style={styles.editAvatarBtn}><Camera size={12} /></button>
+                <button onClick={() => fileInputRef.current?.click()} style={styles.editAvatarBtn}><Camera size={14} /></button>
               </div>
-              <div style={{ minWidth: '180px' }}>
+              <div>
                 <div style={styles.userName}>{name}</div>
                 <div style={styles.userRole}>{role}</div>
               </div>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Phone size={16} /></div>
-              <div>
-                <div style={styles.label}>Contact Number</div>
-                <div style={{ ...styles.value, fontSize: '13px', marginTop: '0' }}>{phone}</div>
-              </div>
-            </div>
+            {!isMobile && (
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Phone size={16} /></div>
+                  <div>
+                    <div style={styles.label}>Contact Number</div>
+                    <div style={{ ...styles.value, fontSize: '13px' }}>{phone}</div>
+                  </div>
+                </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Calendar size={16} /></div>
-              <div>
-                <div style={styles.label}>Date of Birth</div>
-                <div style={{ ...styles.value, fontSize: '13px', marginTop: '0' }}>{dob}</div>
-              </div>
-            </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Calendar size={16} /></div>
+                  <div>
+                    <div style={styles.label}>Date of Birth</div>
+                    <div style={{ ...styles.value, fontSize: '13px' }}>{dob}</div>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           <div style={styles.infoGrid}>
+            {isMobile && (
+              <>
+                <div style={styles.infoCard}>
+                  <div style={styles.iconCircle}><Phone size={18} /></div>
+                  <div>
+                    <div style={styles.label}>Contact Number</div>
+                    <div style={styles.value}>{phone}</div>
+                  </div>
+                </div>
+                <div style={styles.infoCard}>
+                  <div style={styles.iconCircle}><Calendar size={18} /></div>
+                  <div>
+                    <div style={styles.label}>Date of Birth</div>
+                    <div style={styles.value}>{dob}</div>
+                  </div>
+                </div>
+              </>
+            )}
             <div style={styles.infoCard}>
               <div style={styles.iconCircle}><Users size={18} /></div>
               <div>
@@ -326,15 +283,14 @@ export default function ProfileScreen({ onBack }) {
               <div style={styles.iconCircle}><Mail size={18} /></div>
               <div>
                 <div style={styles.label}>Email Address</div>
-                <div style={{ ...styles.value, fontSize: '12px' }}>{user?.email || 'dinesh@navabharathtechnologies.com'}</div>
+                <div style={{ ...styles.value, fontSize: isSmallMobile ? '12px' : '14px' }}>{user?.email || 'dinesh@navabharathtechnologies.com'}</div>
               </div>
             </div>
-            </div>
-
+          </div>
 
           <div style={styles.aboutSection}>
-            <div style={{ ...styles.label, marginBottom: '10px', fontSize: '13px', color: '#0B1E3F' }}>About Me</div>
-            <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.6' }}>
+            <div style={{ ...styles.label, marginBottom: '10px', color: '#0B1E3F' }}>About Me</div>
+            <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.6', fontWeight: '600' }}>
               {aboutMe}
             </div>
           </div>
