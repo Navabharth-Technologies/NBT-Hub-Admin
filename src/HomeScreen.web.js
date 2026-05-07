@@ -197,8 +197,8 @@ export default function SuperAdminHomeWeb() {
       display: 'flex',
       justifyContent: 'space-around',
       alignItems: 'center',
-      padding: isMobile ? '10px 12px' : '10px 20px',
-      gap: isMobile ? '4px' : '20px',
+      padding: isMobile ? '8px 10px' : '10px 16px',
+      gap: isMobile ? '2px' : '12px',
       boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
       border: '1.5px solid rgba(255,255,255,0.4)',
       backdropFilter: 'blur(15px)',
@@ -212,13 +212,13 @@ export default function SuperAdminHomeWeb() {
       color: isActive ? '#0B1E3F' : 'rgba(11, 30, 63, 0.6)', 
       transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
       flex: 1,
-      padding: isMobile ? '8px 4px' : '10px 8px',
+      padding: isMobile ? '6px 2px' : '8px 6px',
       borderRadius: '24px',
       backgroundColor: 'transparent',
       margin: '0 4px'
     }),
     dockText: { 
-      fontSize: isMobile ? '7px' : '8px', 
+      fontSize: isMobile ? '6px' : '7px', 
       fontWeight: '900', 
       fontFamily: "'Outfit', sans-serif",
       marginTop: '3px',
@@ -799,7 +799,7 @@ export default function SuperAdminHomeWeb() {
       </header>
 
       <main ref={scrollRef} style={styles.mainContent}>
-        <div style={{ paddingBottom: isMobile ? '20px' : '40px' }}>
+        <div style={{ paddingBottom: isMobile ? '100px' : '150px' }}>
           {renderContent()}
         </div>
 
@@ -819,7 +819,7 @@ export default function SuperAdminHomeWeb() {
                   return (
                     <div key={item.id} style={styles.dockItem(isActive)} onClick={() => setActiveTab(item.id)}>
                       <div style={{ position: 'relative' }}>
-                        <Icon size={isMobile ? 20 : 22} style={{ strokeWidth: '2.5px' }} />
+                        <Icon size={isMobile ? 18 : 20} style={{ strokeWidth: '2.5px' }} />
                         
                         {item.id === 'thread' && unreadCount > 0 && (
                           <div style={{
