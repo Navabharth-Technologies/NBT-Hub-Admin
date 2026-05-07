@@ -43,13 +43,23 @@ export default function SuperAdminHomeWeb() {
   const scrollTimeout = useRef(null);
   const scrollRef = useRef(null);
 
+  const hideDockTemporarily = () => {
+    setShowDock(false);
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+    scrollTimeout.current = setTimeout(() => {
+      setShowDock(true);
+    }, 3000);
+  };
+
+  const showDockImmediately = () => {
+    setShowDock(true);
+    if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
+  };
+
   useEffect(() => {
     const handleScroll = () => {
-      setShowDock(false);
-      if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
-      scrollTimeout.current = setTimeout(() => {
-        setShowDock(true);
-      }, 3000); // 3 seconds delay before showing again
+      // User wants footer VISIBLE when scrolling
+      showDockImmediately();
     };
 
     const container = scrollRef.current;
@@ -373,7 +383,7 @@ export default function SuperAdminHomeWeb() {
       <div style={styles.gridCards}>
         <div 
           style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'users' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
-          onClick={() => setActiveTab('users')}
+          onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('users'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
@@ -382,7 +392,7 @@ export default function SuperAdminHomeWeb() {
         </div>
         <div 
           style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'teams' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
-          onClick={() => setActiveTab('teams')}
+          onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('teams'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
@@ -392,7 +402,7 @@ export default function SuperAdminHomeWeb() {
 
         <div 
           style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'running' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
-          onClick={() => setActiveTab('running')}
+          onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('running'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
@@ -401,7 +411,7 @@ export default function SuperAdminHomeWeb() {
         </div>
         <div 
           style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'completed' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
-          onClick={() => setActiveTab('completed')}
+          onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('completed'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
         >
@@ -654,7 +664,7 @@ export default function SuperAdminHomeWeb() {
                 <motion.div 
                   key={i} 
                   layout
-                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
+                  onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
                   animate={{ 
                     scale: selectedCardId === p.name ? 1.08 : 1,
                     zIndex: selectedCardId === p.name ? 50 : 1,
@@ -703,7 +713,7 @@ export default function SuperAdminHomeWeb() {
                 <motion.div 
                   key={i} 
                   layout
-                  onClick={(e) => { e.stopPropagation(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
+                  onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
                   animate={{ 
                     scale: selectedCardId === p.name ? 1.08 : 1,
                     zIndex: selectedCardId === p.name ? 50 : 1,
@@ -737,7 +747,7 @@ export default function SuperAdminHomeWeb() {
   };
 
   return (
-    <div style={styles.layout}>
+    <div style={styles.layout} onClick={hideDockTemporarily}>
       <header style={styles.topBar}>
         <div 
           style={{ ...styles.topBarLeft, cursor: 'pointer' }} 
