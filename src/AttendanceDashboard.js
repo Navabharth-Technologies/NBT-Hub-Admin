@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Download, Calendar, Clock, Search, RefreshCw, 
-  UserCheck, FileText, ShieldCheck, MapPin, LogOut, ChevronDown, UserPlus, Filter, User
+  UserCheck, FileText, LogOut
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';

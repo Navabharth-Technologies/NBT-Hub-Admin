@@ -1,9 +1,8 @@
 import React from 'react';
-import { BrowserRouter } from 'react-router-dom';
-import { useAuth } from './AuthContext';
+import { useAuth } from './AuthContext.js';
 import SuperAdminHomeWeb from './HomeScreen.web.js';
-import LoginScreen from './LoginScreen';
-import SaturdayRequirementsPopover from './SaturdayRequirementsPopover';
+import LoginScreen from './LoginScreen.js';
+import SaturdayRequirementsPopover from './SaturdayRequirementsPopover.js';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -17,9 +16,9 @@ export default function App() {
   }
 
   return (
-    <BrowserRouter>
+    <>
       {user ? <SuperAdminHomeWeb /> : <LoginScreen />}
       {user && <SaturdayRequirementsPopover />}
-    </BrowserRouter>
+    </>
   );
 }

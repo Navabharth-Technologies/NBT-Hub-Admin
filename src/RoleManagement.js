@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ArrowLeft } from 'lucide-react';
 
 const rolesData = [
   { id: 1, name: 'HR', permissions: ['manage_users', 'view_reports'] },
@@ -8,7 +9,7 @@ const rolesData = [
 
 const allPerms = ['manage_users', 'view_reports', 'edit_roles', 'delete_records', 'view_team', 'assign_courses', 'take_courses'];
 
-import { ArrowLeft } from 'lucide-react';
+
 
 export default function RoleManagement({ onBack }) {
   const [roles, setRoles] = useState(rolesData);

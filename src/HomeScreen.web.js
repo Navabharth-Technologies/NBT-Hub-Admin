@@ -1,29 +1,29 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useAuth } from './AuthContext';
-import { useThread } from './ThreadContext';
+import { useAuth } from './AuthContext.js';
+import { useThread } from './ThreadContext.js';
 import { Users, Database, Globe, Activity, Terminal, Lock, LayoutDashboard, Calendar, Heart, BookOpen, Layers, MessageSquare, ClipboardList, ShieldCheck, CheckSquare, Clock, Shield, User, Bell, BarChart2, Key, Download, LogOut, Trophy, Gift, ArrowLeft, ClipboardCheck, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-import UserManagement from './UserManagement';
-import CourseManagement from './CourseManagement';
-import TeamAndProjectOverview from './TeamAndProjectOverview';
-import SuggestionDashboard from './suggestion';
-import SystemLogs from './SystemLogs';
-import ComplianceDashboard from './ComplianceDashboard';
-import RoleManagement from './RoleManagement';
-import AnalyticsDashboard from './AnalyticsDashboard';
-import LeaveManagement from './LeaveManagement';
+import UserManagement from './UserManagement.js';
+import CourseManagement from './CourseManagement.js';
+import TeamAndProjectOverview from './TeamAndProjectOverview.js';
+import SuggestionDashboard from './suggestion.js';
+import SystemLogs from './SystemLogs.js';
+import ComplianceDashboard from './ComplianceDashboard.js';
+import RoleManagement from './RoleManagement.js';
+import AnalyticsDashboard from './AnalyticsDashboard.js';
+import LeaveManagement from './LeaveManagement.js';
 
-import ThreadModule from './ThreadModule';
-import ProfileScreen from './ProfileScreen';
-import HolidayListScreen from './HolidayListScreen';
-import RewardsModule from './RewardsModule';
-import AttendanceDashboard from './AttendanceDashboard';
-import EmployeeAttendanceDetail from './EmployeeAttendanceDetail';
-import AdminAttendanceLogs from './AdminAttendanceLogs';
+import ThreadModule from './ThreadModule.js';
+import ProfileScreen from './ProfileScreen.js';
+import HolidayListScreen from './HolidayListScreen.js';
+import RewardsModule from './RewardsModule.js';
+import AttendanceDashboard from './AttendanceDashboard.js';
+import EmployeeAttendanceDetail from './EmployeeAttendanceDetail.js';
+import AdminAttendanceLogs from './AdminAttendanceLogs.js';
 import logoImg from './logo.png';
-import BirthdayScreen from './BirthdayListScreen';
-import { API_ENDPOINTS } from './config';
+import BirthdayScreen from './BirthdayListScreen.js';
+import { API_ENDPOINTS } from './config.js';
 
 export default function SuperAdminHomeWeb() {
   const { user, logout } = useAuth();
