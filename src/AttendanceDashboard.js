@@ -21,11 +21,11 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
   const [showFilterMenu, setShowFilterMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState({
-    start: new Date().toISOString().split('T')[0],
+    start: `${new Date().getFullYear()}-01-01`,
     end: new Date().toISOString().split('T')[0]
   });
   
-  const [metrics, setMetrics] = useState({ present: 66, absent: 0, halfDay: 0, totalLeaves: 3, totalLogs: 84 });
+  const [metrics, setMetrics] = useState({ present: 0, absent: 0, halfDay: 0, totalLeaves: 0, totalLogs: 0 });
   const [winWidth, setWinWidth] = useState(window.innerWidth);
   const [systemLogs, setSystemLogs] = useState([]);
   const [showSystemLogs, setShowSystemLogs] = useState(false);
@@ -100,12 +100,13 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
       // Step 2: Consolidated Backend Fetch: Get everything from the official attendance_logs table
       let allLogs = [];
       const today = new Date().toISOString().split('T')[0];
+      let resData = {};
       try {
         const fetchUrl = `${BASE}/api/attendance_logs?startDate=${dateRange.start}&endDate=${dateRange.end}&limit=5000`;
         const res = await fetch(fetchUrl, { headers });
         if (res.ok) {
-          const result = await res.json();
-          allLogs = Array.isArray(result) ? result : (result.data || result.logs || result.attendance || []);
+          resData = await res.json();
+          allLogs = Array.isArray(resData) ? resData : (resData.data || resData.logs || resData.attendance || []);
         }
       } catch (e) {
         console.error('Backend Fetch Error:', e);
@@ -147,8 +148,8 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
           in_time: log.in_time || log.punch_in || log.check_in || '--:--',
           out_time: log.out_time || log.punch_out || log.check_out || '--:--',
           work_hrs: log.work_time || log.work_hours || log.work_hrs || '00:00',
-          punch_in_location: log.punchin_location || log.punch_in_location || log.check_in_location || 'Office Terminal',
-          punch_out_location: log.punchout_location || log.punch_out_location || log.check_out_location || 'Office Terminal',
+          punch_in_location: log.punchin_location || log.punch_in_location || log.check_in_location || '',
+          punch_out_location: log.punchout_location || log.punch_out_location || log.check_out_location || '',
           status: (log.status || (log.in_time && log.in_time !== '--:--' ? 'P' : 'A')).toUpperCase(),
           remark: log.remark || ''
         };
@@ -177,37 +178,9 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
       });
 
       addLog(`Final logs after filter & sort: ${filtered.length}`);
-      
-      // Smart Merge: Use live fetched staff list and overlay real punch data
-      const mergedLogs = employees.map(staff => {
-        const staffId = String(staff.Empcode || staff.id);
-        const realLog = filtered.find(log => 
-          (String(log.user_id) === staffId || String(log.Empcode) === staffId)
-        );
-        
-        if (realLog) {
-          return {
-            ...staff,
-            ...realLog,
-            EmployeeName: staff.name, // Keep the clean name from profile
-            in_time: realLog.in_time || realLog.punch_in || '--:--',
-            out_time: realLog.out_time || realLog.punch_out || '--:--',
-            punch_date: realLog.punch_date || realLog.date || today
-          };
-        }
-        return { ...staff, EmployeeName: staff.name, punch_date: today, status: 'A', in_time: '--:--', out_time: '--:--' };
-      });
 
-      // Also include any other logs from different dates (historical)
-      const otherLogs = filtered.filter(log => 
-        !employees.some(staff => 
-          String(log.user_id) === String(staff.Empcode || staff.id)
-        )
-      );
-
-      const combined = [...mergedLogs, ...otherLogs];
-      setLogs(combined);
-      calculateMetrics(combined);
+      setLogs(mapped);
+      calculateMetrics(mapped, resData);
     } catch (error) {
       addLog(`Error fetching attendance: ${error.message}`, 'error');
       setLogs([]);
@@ -217,14 +190,24 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
   };
 
 
-  const calculateMetrics = (data) => {
-    const stats = { present: 0, absent: 0, halfDay: 0, totalLeaves: 3, totalLogs: data.length };
-    data.forEach(log => {
-      const status = (log.status || (log.in_time ? 'P' : 'A')).toUpperCase();
-      if (status.includes('P')) stats.present++;
-      if (status.includes('A')) stats.absent++;
-      if (status.includes('HD')) stats.halfDay++;
-    });
+  const calculateMetrics = (data, apiData = {}) => {
+    const stats = { 
+      present: apiData.presentCount || apiData.present || 0, 
+      absent: apiData.absentCount || apiData.leaves || apiData.absent || 0, 
+      halfDay: apiData.halfDayCount || apiData.halfDay || 0, 
+      totalLeaves: 0, 
+      totalLogs: apiData.totalCount || apiData.totalLogs || data.length 
+    };
+
+    // If backend didn't provide counts, calculate from logs
+    if (!stats.present && !stats.absent && !stats.halfDay) {
+      data.forEach(log => {
+        const status = (log.status || (log.in_time && log.in_time !== '--:--' ? 'P' : 'A')).toUpperCase();
+        if (status === 'P' || status === 'PRESENT') stats.present++;
+        if (status === 'A' || status === 'ABSENT') stats.absent++;
+        if (status === 'HD' || status === 'HALF DAY' || status === 'HALF-DAY') stats.halfDay++;
+      });
+    }
     setMetrics(stats);
   };
 
@@ -323,7 +306,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
     th: { textAlign: 'left', padding: isMobile ? '12px 16px' : '16px 24px', fontSize: isMobile ? '9px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', borderBottom: '1px solid #F1F5F9' },
     td: { padding: '20px 12px', borderBottom: '1px solid #F8FAFC' },
     empCell: { display: 'flex', alignItems: 'center', gap: '12px' },
-    avatar: { width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', fontWeight: '900', fontSize: '12px' },
+    avatar: { width: '32px', height: '32px', borderRadius: '8px', backgroundColor: '#EFF6FF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', fontWeight: '900', fontSize: '12px', objectFit: 'cover' },
     empName: { fontSize: '13px', fontWeight: '800', color: '#0B1E3F' },
     empRole: { fontSize: '10px', color: '#94A3B8', fontWeight: '700', marginTop: '1px' },
     dateText: { fontSize: '13px', fontWeight: '700', color: '#475569' },
@@ -419,47 +402,6 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
 
 
 
-        {/* Small Summary Boxes below Title */}
-        <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(3, 1fr)', gap: isMobile ? '12px' : '16px', marginBottom: '30px' }}>
-          <div 
-            onClick={() => {
-              setSearchTerm('');
-              setDateRange({ start: '2026-02-01', end: new Date().toISOString().split('T')[0] });
-            }}
-            style={{ backgroundColor: 'white', padding: isMobile ? '12px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px', cursor: 'pointer' }}
-          >
-            <div style={{ backgroundColor: '#F0FDF4', padding: '6px', borderRadius: '8px' }}><FileText size={16} color="#10B981" /></div>
-            <div>
-              <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>LOGS</div>
-              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#0B1E3F' }}>{filteredLogs.length}</div>
-            </div>
-          </div>
-          <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ backgroundColor: '#EFF6FF', padding: '6px', borderRadius: '8px' }}><UserCheck size={16} color="#3B82F6" /></div>
-            <div>
-              <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>PRESENT</div>
-              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#3B82F6' }}>
-                {filteredLogs.filter(log => {
-                  const inT = log.in_time || log.punch_in;
-                  return inT && inT !== '--:--';
-                }).length}
-              </div>
-            </div>
-          </div>
-          <div style={{ backgroundColor: 'white', padding: isMobile ? '8px 16px' : '12px 24px', borderRadius: '12px', border: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', gap: '12px', gridColumn: isMobile ? 'span 2' : 'auto' }}>
-            <div style={{ backgroundColor: '#FEF2F2', padding: '6px', borderRadius: '8px' }}><LogOut size={16} color="#EF4444" /></div>
-            <div>
-              <div style={{ fontSize: isMobile ? '8px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' }}>ABSENT</div>
-              <div style={{ fontSize: isMobile ? '13px' : '15px', fontWeight: '900', color: '#EF4444' }}>
-                {filteredLogs.filter(log => {
-                  const inT = log.in_time || log.punch_in;
-                  return !inT || inT === '--:--';
-                }).length}
-              </div>
-            </div>
-          </div>
-        </div>
-
         {/* Clean Table Section */}
         <div style={{ backgroundColor: 'white', borderRadius: '24px', border: '1.5px solid #F1F5F9', overflowX: 'auto', boxShadow: '0 4px 20px rgba(0,0,0,0.01)' }}>
           <table style={styles.table}>
@@ -500,12 +442,16 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
                     >
                       <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '20px 24px' }}>
                         <div style={styles.empCell}>
-                          <div style={styles.avatar}>{(log.EmployeeName || 'E').charAt(0)}</div>
+                          {log.profile_pic ? (
+                            <img src={log.profile_pic} style={styles.avatar} alt="" />
+                          ) : (
+                            <div style={styles.avatar}>{(log.EmployeeName || 'E').charAt(0)}</div>
+                          )}
                           <div>
                             <div style={{ ...styles.empName, color: '#2563EB', textDecoration: 'underline', textUnderlineOffset: '3px', whiteSpace: 'nowrap' }}>
                               {log.EmployeeName}
                             </div>
-                            <div style={styles.empRole}>{log.remark || 'Staff Member'}</div>
+                            <div style={styles.empRole}>{log.role || log.designation || log.department || 'Team Member'}</div>
                           </div>
                         </div>
                       </td>
@@ -533,8 +479,28 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
                           {status}
                         </div>
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>{log.punch_in_location || '---'}</td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>{log.punch_out_location || '---'}</td>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punch_in_location || 'NAVABHARATH TECHNOLOGIES')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#2563EB', textDecoration: 'none' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {log.punch_in_location || '---'}
+                        </a>
+                      </td>
+                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                        <a 
+                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punch_out_location || 'NAVABHARATH TECHNOLOGIES')}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ color: '#2563EB', textDecoration: 'none' }}
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          {log.punch_out_location || '---'}
+                        </a>
+                      </td>
                     </tr>
                   );
                 })

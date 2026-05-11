@@ -24,7 +24,7 @@ export default function UserManagement({ onBack }) {
              id: u.id || u._id || 'N/A',
              status: u.status || 'Active',
              team: u.team || 'General',
-             role: u.role || 'Staff Member'
+             role: u.role || 'Member'
            })));
         } else {
            setUsers([]);

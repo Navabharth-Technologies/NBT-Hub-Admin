@@ -75,16 +75,16 @@ const HolidayListScreen = ({ onBack }) => {
     },
     card: (passed) => ({
       backgroundColor: 'white',
-      borderRadius: winWidth < 768 ? '25px' : '35px',
-      padding: winWidth < 768 ? '16px' : '24px',
+      borderRadius: winWidth < 768 ? '25px' : '30px',
+      padding: winWidth < 768 ? '16px 16px 32px 16px' : '16px 20px',
       display: 'flex',
       alignItems: winWidth < 768 ? 'flex-start' : 'center',
-      gap: winWidth < 768 ? '12px' : '20px',
+      gap: winWidth < 768 ? '12px' : '16px',
       border: passed ? '1px solid #f1f5f9' : '2.5px solid #10b981',
       boxShadow: passed ? '0 10px 30px rgba(0,0,0,0.02)' : '0 15px 40px rgba(16, 185, 129, 0.08)',
       transition: 'all 0.3s ease',
       position: 'relative',
-      minHeight: '110px'
+      minHeight: winWidth < 768 ? '80px' : '85px'
     }),
     dateBox: {
       width: winWidth < 768 ? '60px' : '75px',
@@ -114,28 +114,27 @@ const HolidayListScreen = ({ onBack }) => {
     dayName: {
       fontSize: winWidth < 768 ? '11px' : '12px',
       color: '#94a3b8',
-      fontWeight: '700',
-      width: winWidth < 768 ? 'auto' : '70px',
+      fontWeight: '800',
       textAlign: 'left'
     },
     holidayName: {
-      fontSize: winWidth < 768 ? '15px' : '18px',
+      fontSize: winWidth < 768 ? '15px' : '16px',
       fontWeight: '1000',
       color: '#0B1E3F',
-      flex: 1,
-      textAlign: winWidth < 768 ? 'left' : 'center',
-      padding: winWidth < 768 ? '0' : '0 10px'
+      textAlign: 'left',
+      lineHeight: '1.2'
     },
     badge: (passed) => ({
-      padding: winWidth < 768 ? '6px 12px' : '8px 18px',
+      padding: winWidth < 768 ? '4px 10px' : '8px 18px',
       borderRadius: '12px',
       fontSize: winWidth < 768 ? '9px' : '10px',
       fontWeight: '1000',
       backgroundColor: passed ? '#f1f5f9' : '#10b981',
       color: passed ? '#94a3b8' : 'white',
       letterSpacing: '1px',
-      flexShrink: 0,
-      ...(winWidth < 768 ? { alignSelf: 'flex-start', marginTop: '5px' } : { position: 'absolute', bottom: '15px', right: '15px' })
+      position: 'absolute',
+      bottom: winWidth < 768 ? '12px' : '15px',
+      right: winWidth < 768 ? '12px' : '15px'
     })
   };
 
@@ -172,12 +171,11 @@ const HolidayListScreen = ({ onBack }) => {
                   <div style={s.month}>{date.toLocaleString('default', { month: 'short' })}</div>
                   <div style={s.dayNum}>{date.getDate()}</div>
                 </div>
-                
-                <div style={{ display: 'flex', flexDirection: winWidth < 768 ? 'column' : 'row', alignItems: winWidth < 768 ? 'flex-start' : 'center', flex: 1, gap: winWidth < 768 ? '4px' : '0' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', flex: 1, gap: '4px' }}>
+                  <div style={s.holidayName}>{h.name}</div>
                   <div style={s.dayName}>
                     {date.toLocaleString('default', { weekday: 'long' })}
                   </div>
-                  <div style={s.holidayName}>{h.name}</div>
                 </div>
 
                 <div style={s.badge(passed)}>

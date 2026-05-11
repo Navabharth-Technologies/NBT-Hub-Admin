@@ -26,7 +26,7 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [startDate, setStartDate] = useState('2026-02-01');
+  const [startDate, setStartDate] = useState(`${new Date().getFullYear()}-01-01`);
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
   const [winWidth, setWinWidth] = useState(window.innerWidth);
 
@@ -65,9 +65,9 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
         'Content-Type': 'application/json'
       };
 
-      const BASE = BASE_URL || 'http://192.168.1.3:5000';
+      const BASE = BASE_URL;
 
-      // Fetch employee info if we have an ID
+      // 1. Fetch employee info to get the correct name/role
       if (id) {
         try {
           const userRes = await fetch(`${BASE}/api/users`, { headers });
@@ -80,96 +80,45 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
         } catch(e) { console.error('User fetch error:', e); }
       }
 
+      // 2. Fetch all logs for the range
+      const res = await fetch(`${BASE}/api/attendance_logs?startDate=${startDate}&endDate=${endDate}&limit=5000`, { headers });
       let allLogs = [];
-      // Sanitize ID to remove legacy suffixes like ':1'
-      const uid = String(id || '').split(':')[0].trim().toLowerCase();
-
-      // Strategy 0: Unified Local Database Fetch (Primary)
-      const fetchUrls = [
-        `${BASE}/api/attendance_logs?startDate=${startDate}&endDate=${endDate}&limit=5000`,
-        `${BASE}/api/attendance_logs?userId=${id}&limit=5000`,
-        `${BASE}/api/attendance?userId=${id}&startDate=${startDate}&endDate=${endDate}`
-      ];
-
-      for (const url of fetchUrls) {
-        try {
-          console.log(`📡 Fetching from local DB: ${url}`);
-          const res = await fetch(url, { headers });
-          if (res.ok) {
-            const result = await res.json();
-            const data = Array.isArray(result) ? result : (result.data || result.logs || result.attendance || []);
-            
-            const matched = data.filter(l => {
-              const logEmpCode = String(l.Empcode || '').trim().toLowerCase();
-              const logUserId = String(l.userId || l.user_id || '').trim().toLowerCase();
-              const logName = (l.EmployeeName || l.name || '').toLowerCase().trim();
-              const targetName = (employee?.name || '').toLowerCase().trim();
-              return (uid && (logEmpCode === uid || logUserId === uid || logEmpCode.includes(uid) || logUserId.includes(uid))) ||
-                     (targetName && logName && (logName.includes(targetName) || targetName.includes(logName)));
-            });
-
-            if (matched.length > 0) {
-              console.log(`✅ Local DB Success: Found ${matched.length} logs`);
-              allLogs = matched;
-              break;
-            }
-          }
-        } catch (e) { console.error('Local Fetch Error:', e); }
+      if (res.ok) {
+        const result = await res.json();
+        allLogs = Array.isArray(result) ? result : (result.data || result.logs || result.attendance || []);
       }
 
-      // If employee profile wasn't found earlier, try to extract it from the first log found
-      if ((!employee || !employee.name) && allLogs.length > 0) {
-        const first = allLogs[0];
-        setEmployee({
-          name: first.EmployeeName || first.name || employeeName || `Staff ${uid}`,
-          Empcode: first.Empcode || first.userId || uid,
-          role: first.role || first.remark || 'Team Member'
-        });
-      }
-
-      // ✅ Group by employee + date
-      const grouped = {};
-      allLogs.forEach(l => {
-        const dateStr = String(l.punch_date || l.date || '').split('T')[0].split(' ')[0];
-        if (!dateStr) return;
-        
-        if (!grouped[dateStr]) grouped[dateStr] = [];
-        grouped[dateStr].push(l);
+      // 3. Filter for this specific employee
+      const uid = String(id || '').toLowerCase();
+      const myLogs = allLogs.filter(l => {
+        const logId = String(l.user_id || l.Empcode || l.userId || '').toLowerCase();
+        return logId === uid || logId.includes(uid);
       });
 
-      const processed = Object.keys(grouped).map(key => {
-        const dayPunches = grouped[key].sort((a,b) => String(a.in_time || '00:00').localeCompare(String(b.in_time || '00:00')));
-        const first = dayPunches[0];
-        const last = dayPunches[dayPunches.length - 1];
-        const isSunday = new Date(dayPunches[0].punch_date || dayPunches[0].date).getDay() === 0;
-        
-        // Use exact DB fields from screenshot
-        const inTime = first.in_time || '----';
-        const outTime = dayPunches.length > 1 ? (last.out_time || last.in_time || '----') : (first.out_time || '----');
-        const workTime = first.work_time || last.work_time || calculateWorkHours(inTime, outTime);
-        const remark = first.remark || last.remark || '';
-        const inLoc = first.punchin_location || 'Biometric Terminal';
-        const outLoc = last.punchout_location || 'Biometric Terminal';
+      // 4. Map and process strictly backend-sourced logs
+      const processed = myLogs.map(realLog => {
+        const inT = realLog.in_time || realLog.punch_in || '----';
+        const outT = realLog.out_time || realLog.punch_out || '----';
+        const dateStr = (realLog.punch_date || realLog.date || '').split('T')[0].split(' ')[0];
         
         return {
-          ...first,
-          employeeName: first.EmployeeName || first.name || employee?.name || "Unknown",
-          employeeId: first.user_id || first.Empcode || first.userId || id,
-          date: key,
-          in_time: inTime,
-          out_time: outTime,
-          work_hrs: workTime,
-          status: first.status || (isSunday ? 'WO' : (inTime !== '----' ? 'P' : 'A')),
-          remark: remark,
-          punchin_location: inLoc,
-          punchout_location: outLoc
+          ...realLog,
+          date: dateStr,
+          employeeName: employee?.name || realLog.EmployeeName || employeeName || "---",
+          employeeId: id,
+          in_time: inT,
+          out_time: outT,
+          work_hrs: realLog.work_time || realLog.work_hours || calculateWorkHours(inT, outT),
+          status: (realLog.status || (inT !== '----' ? 'P' : 'A')).toUpperCase(),
+          punchin_location: realLog.punchin_location || realLog.punch_in_location || '---',
+          punchout_location: realLog.punchout_location || realLog.punch_out_location || '---'
         };
-      }).sort((a,b) => b.date.localeCompare(a.date));
+      }).sort((a, b) => b.date.localeCompare(a.date));
 
       setLogs(processed);
     } catch (err) {
       console.error(err);
-      setError("Sync failed.");
+      setError("Synchronization failed. Please check network.");
     } finally {
       setLoading(false);
     }
@@ -296,16 +245,26 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
                     </td>
                     <td style={{ ...styles.td, color: '#64748B', fontWeight: '700', fontSize: '11px' }}>{log.remark || '---'}</td>
                     <td style={styles.td}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B' }}>
+                      <a 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punchin_location || 'NAVABHARATH TECHNOLOGIES')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563EB', textDecoration: 'none' }}
+                      >
                         <MapPin size={14} />
                         {log.punchin_location || 'Office'}
-                      </div>
+                      </a>
                     </td>
                     <td style={styles.td}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B' }}>
+                      <a 
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punchout_location || 'NAVABHARATH TECHNOLOGIES')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563EB', textDecoration: 'none' }}
+                      >
                         <MapPin size={14} />
                         {log.punchout_location || 'Office'}
-                      </div>
+                      </a>
                     </td>
                   </tr>
                 );

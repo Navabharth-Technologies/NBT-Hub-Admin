@@ -214,7 +214,7 @@ export default function ProfileScreen({ onBack }) {
         )}
         <div style={styles.banner}>
           <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', background: 'radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 70%)', opacity: 0.5 }}></div>
-          <div style={styles.bannerText}>Innovation • Excellence • Impact</div>
+          <div style={styles.bannerText}>Smarter Solutions For Better future</div>
         </div>
 
         <div style={styles.masterCard}>
@@ -237,16 +237,36 @@ export default function ProfileScreen({ onBack }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Phone size={16} /></div>
                   <div>
-                    <div style={styles.label}>Contact Number</div>
-                    <div style={{ ...styles.value, fontSize: '13px' }}>{phone}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={styles.label}>Contact Number</div>
+                      {!isEditingPhone && <Edit3 size={12} color="#94a3b8" style={{ cursor: 'pointer' }} onClick={() => setIsEditingPhone(true)} />}
+                    </div>
+                    {isEditingPhone ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                        <input value={phone} onChange={(e) => setPhone(e.target.value)} style={{ ...styles.value, marginTop: 0, border: '1px solid #e2e8f0', borderRadius: '4px', padding: '2px 4px', width: '120px' }} autoFocus />
+                        <Check size={16} color="#10b981" style={{ cursor: 'pointer' }} onClick={() => setIsEditingPhone(false)} />
+                      </div>
+                    ) : (
+                      <div style={{ ...styles.value, fontSize: '13px' }}>{phone}</div>
+                    )}
                   </div>
                 </div>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Calendar size={16} /></div>
                   <div>
-                    <div style={styles.label}>Date of Birth</div>
-                    <div style={{ ...styles.value, fontSize: '13px' }}>{dob}</div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={styles.label}>Date of Birth</div>
+                      {!isEditingDob && <Edit3 size={12} color="#94a3b8" style={{ cursor: 'pointer' }} onClick={() => setIsEditingDob(true)} />}
+                    </div>
+                    {isEditingDob ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                        <input value={dob} onChange={(e) => setDob(e.target.value)} style={{ ...styles.value, marginTop: 0, border: '1px solid #e2e8f0', borderRadius: '4px', padding: '2px 4px', width: '120px' }} autoFocus />
+                        <Check size={16} color="#10b981" style={{ cursor: 'pointer' }} onClick={() => setIsEditingDob(false)} />
+                      </div>
+                    ) : (
+                      <div style={{ ...styles.value, fontSize: '13px' }}>{dob}</div>
+                    )}
                   </div>
                 </div>
               </>
@@ -258,16 +278,36 @@ export default function ProfileScreen({ onBack }) {
               <>
                 <div style={styles.infoCard}>
                   <div style={styles.iconCircle}><Phone size={18} /></div>
-                  <div>
-                    <div style={styles.label}>Contact Number</div>
-                    <div style={styles.value}>{phone}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={styles.label}>Contact Number</div>
+                      {!isEditingPhone && <Edit3 size={12} color="#94a3b8" style={{ cursor: 'pointer' }} onClick={() => setIsEditingPhone(true)} />}
+                    </div>
+                    {isEditingPhone ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                        <input value={phone} onChange={(e) => setPhone(e.target.value)} style={{ ...styles.value, marginTop: 0, border: '1px solid #e2e8f0', borderRadius: '4px', padding: '2px 4px', width: '100%' }} autoFocus />
+                        <Check size={18} color="#10b981" style={{ cursor: 'pointer' }} onClick={() => setIsEditingPhone(false)} />
+                      </div>
+                    ) : (
+                      <div style={styles.value}>{phone}</div>
+                    )}
                   </div>
                 </div>
                 <div style={styles.infoCard}>
                   <div style={styles.iconCircle}><Calendar size={18} /></div>
-                  <div>
-                    <div style={styles.label}>Date of Birth</div>
-                    <div style={styles.value}>{dob}</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <div style={styles.label}>Date of Birth</div>
+                      {!isEditingDob && <Edit3 size={12} color="#94a3b8" style={{ cursor: 'pointer' }} onClick={() => setIsEditingDob(true)} />}
+                    </div>
+                    {isEditingDob ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+                        <input value={dob} onChange={(e) => setDob(e.target.value)} style={{ ...styles.value, marginTop: 0, border: '1px solid #e2e8f0', borderRadius: '4px', padding: '2px 4px', width: '100%' }} autoFocus />
+                        <Check size={18} color="#10b981" style={{ cursor: 'pointer' }} onClick={() => setIsEditingDob(false)} />
+                      </div>
+                    ) : (
+                      <div style={styles.value}>{dob}</div>
+                    )}
                   </div>
                 </div>
               </>

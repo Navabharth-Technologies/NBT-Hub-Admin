@@ -98,7 +98,7 @@ export default function LeaveManagement({ onBack }) {
         let role = l.role || l.user_role || l.employeeRole || l.employee_role;
         if (!role) {
           const u = users.find(u => String(u.id) === String(l.user_id || l.employee_id || l.emp_id || l.userId));
-          role = u?.role || 'Staff Member';
+          role = u?.role || '---';
         }
 
         // Resolve team
@@ -411,7 +411,7 @@ export default function LeaveManagement({ onBack }) {
                         </div>
                         <div>
                           <div style={{ fontSize: '14px', fontWeight: '900', color: '#0B1E3F' }}>{req.user_name || req.name}</div>
-                          <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>{req.role || 'Staff Member'}</div>
+                          <div style={{ fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>{req.role || '---'}</div>
                         </div>
                       </div>
                     </td>
