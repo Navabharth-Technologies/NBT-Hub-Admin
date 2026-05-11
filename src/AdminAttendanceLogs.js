@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Search, MapPin, LogIn, LogOut, ArrowLeft } from 'lucide-react';
+import { Search, LogIn, LogOut, ArrowLeft } from 'lucide-react';
 import { API_ENDPOINTS } from './config';
 import { useAuth } from './AuthContext';
 
