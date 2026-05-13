@@ -51,6 +51,16 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
     } catch(e) { return '00:00'; }
   };
 
+  const formatLongDate = (dStr) => {
+    if (!dStr) return '---';
+    try {
+      const date = new Date(dStr);
+      return date.toLocaleDateString('en-US', { 
+        weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' 
+      });
+    } catch (e) { return dStr; }
+  };
+
   const fetchData = async () => {
     if (!user?.token) return;
     try {
@@ -108,7 +118,7 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
           employeeId: id,
           in_time: inT,
           out_time: outT,
-          work_hrs: realLog.work_time || realLog.work_hours || calculateWorkHours(inT, outT),
+          work_hrs: realLog.work_time || realLog.work_hours || realLog.total_time || realLog.duration || calculateWorkHours(inT, outT),
           status: (realLog.status || (inT !== '----' ? 'P' : 'A')).toUpperCase(),
           punchin_location: realLog.punchin_location || realLog.punch_in_location || '---',
           punchout_location: realLog.punchout_location || realLog.punch_out_location || '---'
@@ -196,20 +206,18 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
               <tr>
                 <th style={styles.th}>EMPLOYEE</th>
                 <th style={styles.th}>DATE</th>
-                <th style={styles.th}>IN TIME</th>
-                <th style={styles.th}>OUT TIME</th>
+                <th style={styles.th}>PUNCH IN</th>
+                <th style={styles.th}>PUNCH OUT</th>
                 <th style={styles.th}>WORK HRS</th>
                 <th style={styles.th}>STATUS</th>
-                <th style={styles.th}>REMARK</th>
-                <th style={styles.th}>IN LOCATION</th>
-                <th style={styles.th}>OUT LOCATION</th>
+                <th style={styles.th}>AUDIT LOCATION</th>
               </tr>
             </thead>
             <tbody>
               {loading ? (
-                <tr><td colSpan="9" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>Synchronizing record history...</td></tr>
+                <tr><td colSpan="7" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>Synchronizing record history...</td></tr>
               ) : logs.length === 0 ? (
-                <tr><td colSpan="9" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>No history found for the selected period.</td></tr>
+                <tr><td colSpan="7" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>No history found for the selected period.</td></tr>
               ) : logs.map((log, i) => {
                 const status = (log.status || (log.in_time !== '----' ? 'P' : 'A')).toUpperCase();
                 const color = status.includes('P') ? '#10B981' : (status.includes('WO') ? '#3B82F6' : '#EF4444');
@@ -231,39 +239,39 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
                     <td style={styles.td}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700' }}>
                         <Calendar size={14} color="#CBD5E1" />
-                        {log.date}
+                        {formatLongDate(log.date)}
                       </div>
                     </td>
-                    <td style={{ ...styles.td, color: '#3B82F6', fontWeight: '800' }}>{log.in_time}</td>
-                    <td style={{ ...styles.td, color: '#64748B', fontWeight: '700' }}>{log.out_time}</td>
-                    <td style={{ ...styles.td, fontWeight: '900', color: '#0F172A' }}>{log.work_hrs} <span style={{ fontSize: '9px', color: '#94A3B8' }}>HOURS</span></td>
+                    <td style={{ ...styles.td, color: '#3B82F6', fontWeight: '800' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Clock size={14} color="#3B82F6" />
+                        {log.in_time}
+                      </div>
+                    </td>
+                    <td style={{ ...styles.td, color: '#64748B', fontWeight: '700' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Clock size={14} color="#CBD5E1" />
+                        {log.out_time}
+                      </div>
+                    </td>
+                    <td style={{ ...styles.td, fontWeight: '900', color: '#0F172A' }}>
+                      {log.work_hrs}<br/><span style={{ fontSize: '9px', color: '#94A3B8', textTransform: 'uppercase' }}>HOURS</span>
+                    </td>
                     <td style={styles.td}>
                       <div style={styles.statusBadge(bg, color)}>
                         <div style={styles.statusDot(color)}></div>
                         {status}
                       </div>
                     </td>
-                    <td style={{ ...styles.td, color: '#64748B', fontWeight: '700', fontSize: '11px' }}>{log.remark || '---'}</td>
                     <td style={styles.td}>
                       <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punchin_location || 'NAVABHARATH TECHNOLOGIES')}`}
+                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punchin_location || log.punchout_location || 'NAVABHARATH TECHNOLOGIES')}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563EB', textDecoration: 'none' }}
+                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', textDecoration: 'none', fontSize: '11px', fontWeight: '600' }}
                       >
-                        <MapPin size={14} />
-                        {log.punchin_location || 'Office'}
-                      </a>
-                    </td>
-                    <td style={styles.td}>
-                      <a 
-                        href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punchout_location || 'NAVABHARATH TECHNOLOGIES')}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#2563EB', textDecoration: 'none' }}
-                      >
-                        <MapPin size={14} />
-                        {log.punchout_location || 'Office'}
+                        <MapPin size={14} color="#CBD5E1" />
+                        {log.punchin_location || log.punchout_location || 'Office Zone'}
                       </a>
                     </td>
                   </tr>

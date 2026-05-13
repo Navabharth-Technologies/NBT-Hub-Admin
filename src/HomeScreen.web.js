@@ -192,17 +192,19 @@ export default function SuperAdminHomeWeb() {
     },
     dockContainer: {
       pointerEvents: 'auto',
-      backgroundColor: 'rgba(167, 214, 218, 0.85)', // glassmorphism adapted
+      backgroundColor: 'rgba(167, 214, 218, 0.95)', 
       borderRadius: '40px',
       display: 'flex',
-      justifyContent: 'space-around',
+      justifyContent: 'space-evenly',
       alignItems: 'center',
-      padding: isMobile ? '8px 10px' : '10px 16px',
-      gap: isMobile ? '2px' : '12px',
-      boxShadow: '0 10px 40px rgba(0,0,0,0.15)',
-      border: '1.5px solid rgba(255,255,255,0.4)',
-      backdropFilter: 'blur(15px)',
-      WebkitBackdropFilter: 'blur(15px)'
+      padding: isMobile ? '12px 2px' : '10px 16px',
+      gap: '0',
+      boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
+      border: '1.5px solid rgba(255,255,255,0.5)',
+      backdropFilter: 'blur(20px)',
+      WebkitBackdropFilter: 'blur(20px)',
+      width: isMobile ? '98%' : 'auto',
+      maxWidth: isMobile ? '500px' : 'none'
     },
     dockItem: (isActive) => ({ 
       display: 'flex', 
@@ -212,27 +214,33 @@ export default function SuperAdminHomeWeb() {
       color: isActive ? '#0B1E3F' : 'rgba(11, 30, 63, 0.6)', 
       transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
       flex: 1,
-      padding: isMobile ? '6px 2px' : '8px 6px',
+      padding: isMobile ? '10px 0' : '8px 6px',
       borderRadius: '24px',
       backgroundColor: 'transparent',
-      margin: '0 4px'
+      margin: '0',
+      minWidth: 0,
+      maxWidth: isMobile ? 'none' : '120px'
     }),
     dockText: { 
-      fontSize: isMobile ? '6px' : '7px', 
-      fontWeight: '900', 
+      fontSize: isMobile ? '6.8px' : '10px', 
+      fontWeight: '1000', 
       fontFamily: "'Outfit', sans-serif",
-      marginTop: '3px',
-      letterSpacing: '0.3px'
+      marginTop: '4px',
+      letterSpacing: isMobile ? '-0.2px' : '0px',
+      textTransform: 'uppercase',
+      whiteSpace: 'nowrap',
+      textAlign: 'center',
+      width: '100%'
     }
   };
 
   const navItems = [
-    { id: 'dashboard', label: 'Home', icon: LayoutDashboard },
-    { id: 'attendance', label: 'Attendance', icon: ClipboardCheck },
+    { id: 'dashboard', label: 'HOME', icon: LayoutDashboard },
+    { id: 'attendance', label: 'ATTENDANCE', icon: ClipboardCheck },
     { id: 'leave', label: 'LEAVES', icon: Calendar },
-    { id: 'prizes', label: 'Prizes', icon: Trophy },
-    { id: 'thread', label: 'Thread', icon: MessageSquare },
-    { id: 'profile', label: 'Profile', icon: User }
+    { id: 'prizes', label: 'PRIZES', icon: Trophy },
+    { id: 'thread', label: 'THREAD', icon: MessageSquare },
+    { id: 'profile', label: 'PROFILE', icon: User }
   ];
 
   const [calendarItems, setCalendarItems] = useState([]);
