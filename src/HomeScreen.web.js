@@ -194,39 +194,40 @@ export default function SuperAdminHomeWeb() {
       pointerEvents: 'auto',
       backgroundColor: 'rgba(167, 214, 218, 0.95)', 
       borderRadius: '40px',
-      display: 'flex',
-      justifyContent: 'space-evenly',
+      display: 'grid',
+      gridTemplateColumns: 'repeat(6, 1fr)',
+      justifyContent: 'center',
       alignItems: 'center',
-      padding: isMobile ? '12px 2px' : '10px 16px',
+      padding: isMobile ? '10px 8px' : '10px 20px',
       gap: '0',
       boxShadow: '0 10px 40px rgba(0,0,0,0.2)',
       border: '1.5px solid rgba(255,255,255,0.5)',
       backdropFilter: 'blur(20px)',
       WebkitBackdropFilter: 'blur(20px)',
-      width: isMobile ? '98%' : 'auto',
-      maxWidth: isMobile ? '500px' : 'none'
+      width: isMobile ? 'min(90%, 380px)' : 'max-content',
+      maxWidth: '1200px'
     },
     dockItem: (isActive) => ({ 
       display: 'flex', 
       flexDirection: 'column', 
       alignItems: 'center', 
+      justifyContent: 'center',
       cursor: 'pointer', 
       color: isActive ? '#0B1E3F' : 'rgba(11, 30, 63, 0.6)', 
       transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
       flex: 1,
-      padding: isMobile ? '10px 0' : '8px 6px',
+      padding: isMobile ? '5px 2px' : '6px 12px',
       borderRadius: '24px',
       backgroundColor: 'transparent',
       margin: '0',
-      minWidth: 0,
-      maxWidth: isMobile ? 'none' : '120px'
+      minWidth: isMobile ? 0 : '85px'
     }),
     dockText: { 
-      fontSize: isMobile ? '6.8px' : '10px', 
-      fontWeight: '1000', 
+      fontSize: isMobile ? '5.8px' : '8.5px', 
+      fontWeight: '900', 
       fontFamily: "'Outfit', sans-serif",
-      marginTop: '4px',
-      letterSpacing: isMobile ? '-0.2px' : '0px',
+      marginTop: '2px',
+      letterSpacing: '0.1px',
       textTransform: 'uppercase',
       whiteSpace: 'nowrap',
       textAlign: 'center',
@@ -248,8 +249,8 @@ export default function SuperAdminHomeWeb() {
     workforce: 0,
     teams: 0,
     analytics: '0%',
-    running: 5,
-    completed: 3
+    running: 0,
+    completed: 0
   });
   const [employees, setEmployees] = useState([]);
   const [teams, setTeams] = useState([]);
@@ -314,9 +315,25 @@ export default function SuperAdminHomeWeb() {
       }
 
       if (teamRes?.ok) {
-        tData = await safeJson(teamRes) || [];
+        const teamRaw = await safeJson(teamRes);
+        const mainTeams = Array.isArray(teamRaw) ? teamRaw : (teamRaw?.data || teamRaw?.teams || teamRaw?.projects || []);
+        const extraCompleted = teamRaw?.completed_projects || teamRaw?.finished_projects || teamRaw?.completed || [];
+        tData = [...mainTeams, ...(Array.isArray(extraCompleted) ? extraCompleted : [])];
+        
+        // De-duplicate if necessary (by name or id)
+        const uniqueTeams = [];
+        const seen = new Set();
+        tData.forEach(t => {
+          const key = t.id || t.team_id || t.name || t.team_name;
+          if (!seen.has(key)) {
+            seen.add(key);
+            uniqueTeams.push(t);
+          }
+        });
+        tData = uniqueTeams;
+        
         setAllTeams(tData);
-        setTeams(Array.isArray(tData) ? tData.slice(0, 3) : []);
+        setTeams(tData.slice(0, 3));
       }
 
       if (sugRes?.ok || sugAdminRes?.ok) {
@@ -338,17 +355,34 @@ export default function SuperAdminHomeWeb() {
       }
 
       // Compute stats dynamically
-      const runningTeams = tData.filter(t => 
-        (t.status || '').toUpperCase().includes('ACTIVE') || 
-        (t.status || '').toUpperCase().includes('RUNNING') ||
-        (t.status || '').toUpperCase().includes('IN PROGRESS') ||
-        ((t.progress || 0) > 0 && (t.progress || 0) < 100)
-      );
+      const doneTeams = tData.filter(t => {
+        const status = (t.status || t.state || t.project_status || '').toString().toUpperCase();
+        const progress = parseFloat(t.progress || t.completion || t.percentage || t.percent || 0);
+        return status.includes('COMPLETED') || 
+               status.includes('FINISH') || 
+               status.includes('DONE') ||
+               status.includes('SUCCESS') ||
+               status.includes('ARCHIVE') ||
+               status === '2' || // Some APIs use 2 for completed
+               progress >= 100;
+      });
 
-      const doneTeams = tData.filter(t => 
-        (t.status || '').toUpperCase().includes('COMPLETED') || 
-        (t.progress || 0) >= 100
-      );
+      const runningTeams = tData.filter(t => {
+        const status = (t.status || t.state || t.project_status || '').toString().toUpperCase();
+        const progress = parseFloat(t.progress || t.completion || t.percentage || t.percent || 0);
+        const isDone = doneTeams.some(dt => (dt.id === t.id && t.id) || (dt.name === t.name && t.name));
+        
+        return !isDone && (
+          status.includes('ACTIVE') || 
+          status.includes('RUNNING') ||
+          status.includes('IN PROGRESS') ||
+          status.includes('PROCESS') ||
+          status === '1' || // Some APIs use 1 for active
+          (progress > 0 && progress < 100) ||
+          status === '' ||
+          status === 'UNDEFINED'
+        );
+      });
 
       setRunningProjects(runningTeams);
       setCompletedProjects(doneTeams);
@@ -357,8 +391,8 @@ export default function SuperAdminHomeWeb() {
         workforce: Array.isArray(uData) ? uData.length : 0,
         teams: Array.isArray(tData) ? tData.length : 0,
         analytics: '98%',
-        running: 5,
-        completed: 3
+        running: runningTeams.length,
+        completed: doneTeams.length
       });
 
     } catch (err) {
@@ -661,42 +695,49 @@ export default function SuperAdminHomeWeb() {
               <div onClick={handleBack} style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #eef2f6' }}><ArrowLeft size={20} color="#64748b" /></div>
               <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Running Projects</h2>
             </div>
-            <div style={{ display: 'grid', gap: '20px', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(350px, 1fr))' }}>
-              {[
-                { name: 'Power Producers', lead: 'Santhosha A', status: 'In Progress', progress: 25 },
-                { name: 'Dynamo Testers', lead: 'Rakesh Gowda', status: 'Active', progress: 75 },
-                { name: 'Bytes Blasters', lead: 'Sahana N V', status: 'In Progress', progress: 90 },
-                { name: 'Brand Stormers', lead: 'Deekshitha M', status: 'In Progress', progress: 84 },
-                { name: 'Technical Support', lead: 'Manager', status: 'Active', progress: 80 }
-              ].map((p, i) => (
+            <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: '1fr' }}>
+              {runningProjects.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '100px', backgroundColor: 'white', borderRadius: '24px', border: '2px dashed #bfdbfe', color: '#64748b', fontWeight: '800' }}>
+                  No running projects found at the moment.
+                </div>
+              ) : runningProjects.map((p, i) => (
                 <motion.div 
                   key={i} 
                   layout
-                  onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
+                  onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === (p.name || p.team_name) ? null : (p.name || p.team_name)); }}
                   animate={{ 
-                    scale: selectedCardId === p.name ? 1.08 : 1,
-                    zIndex: selectedCardId === p.name ? 50 : 1,
-                    boxShadow: selectedCardId === p.name ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
+                    scale: selectedCardId === (p.name || p.team_name) ? 1.02 : 1,
+                    zIndex: selectedCardId === (p.name || p.team_name) ? 50 : 1,
+                    boxShadow: selectedCardId === (p.name || p.team_name) ? '0 25px 50px -12px rgba(0,0,0,0.15)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   style={{ 
                     backgroundColor: 'white', 
-                    padding: '24px', 
+                    padding: isMobile ? '24px' : '32px', 
                     borderRadius: '24px', 
                     border: '3px solid #bfdbfe',
                     cursor: 'pointer',
-                    position: 'relative'
+                    position: 'relative',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
-                    <div style={{ fontWeight: '1000', fontSize: '18px', color: '#1e293b' }}>{p.name}</div>
-                    <div style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '5px 12px', borderRadius: '10px', fontSize: '10px', fontWeight: '900', textTransform: 'uppercase' }}>{p.status}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+                    <div style={{ fontWeight: '1000', fontSize: isMobile ? '20px' : '24px', color: '#1e293b' }}>{p.name || p.team_name}</div>
+                    <div style={{ backgroundColor: '#eff6ff', color: '#3b82f6', padding: '6px 16px', borderRadius: '12px', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase' }}>{p.status}</div>
                   </div>
-                  <div style={{ fontSize: '13px', color: '#64748b', fontWeight: '700', marginBottom: '15px' }}>Lead: {p.lead}</div>
-                  <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '10px', overflow: 'hidden' }}>
-                    <div style={{ width: `${p.progress}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', borderRadius: '10px' }}></div>
-                  </div>
-                  <div style={{ textAlign: 'right', fontSize: '10px', fontWeight: '950', color: '#3b82f6', marginTop: '8px' }}>{p.progress}% COMPLETE</div>
+                  <div style={{ fontSize: isMobile ? '14px' : '16px', color: '#64748b', fontWeight: '700', marginBottom: '20px' }}>Lead: {p.lead || p.team_lead_name || 'Not Assigned'}</div>
+                  {(() => {
+                    const progVal = parseFloat(p.progress || p.completion || p.percentage || p.percent || 0);
+                    return (
+                      <>
+                        <div style={{ width: '100%', height: '12px', background: '#f1f5f9', borderRadius: '10px', overflow: 'hidden', marginBottom: '10px' }}>
+                          <div style={{ width: `${progVal}%`, height: '100%', background: 'linear-gradient(90deg, #3b82f6, #60a5fa)', borderRadius: '10px' }}></div>
+                        </div>
+                        <div style={{ textAlign: 'right', fontSize: '12px', fontWeight: '950', color: '#3b82f6' }}>{progVal}% COMPLETE</div>
+                      </>
+                    );
+                  })()}
                 </motion.div>
               ))}
             </div>
@@ -712,36 +753,38 @@ export default function SuperAdminHomeWeb() {
               <div onClick={handleBack} style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', border: '1px solid #eef2f6' }}><ArrowLeft size={20} color="#64748b" /></div>
               <h2 style={{ fontSize: isMobile ? '18px' : '20px', fontWeight: '900', color: '#1e293b', margin: 0 }}>Completed Projects</h2>
             </div>
-            <div style={{ display: 'grid', gap: '30px', gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(450px, 1fr))' }}>
-              {[
-                { name: 'Quantum Coders', lead: 'Namith Gowda', status: 'Completed' },
-                { name: 'JKD Mart', lead: 'Santosh', status: 'Completed' },
-                { name: 'Tokens Boy', lead: 'Namith', status: 'Completed' }
-              ].map((p, i) => (
+            <div style={{ display: 'grid', gap: '24px', gridTemplateColumns: '1fr' }}>
+              {completedProjects.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '100px', backgroundColor: 'white', borderRadius: '32px', border: '2px dashed #dcfce7', color: '#64748b', fontWeight: '800' }}>
+                  No completed projects found in history.
+                </div>
+              ) : completedProjects.map((p, i) => (
                 <motion.div 
                   key={i} 
                   layout
-                  onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === p.name ? null : p.name); }}
+                  onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === (p.name || p.team_name) ? null : (p.name || p.team_name)); }}
                   animate={{ 
-                    scale: selectedCardId === p.name ? 1.08 : 1,
-                    zIndex: selectedCardId === p.name ? 50 : 1,
-                    boxShadow: selectedCardId === p.name ? '0 20px 25px -5px rgba(0,0,0,0.1)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
+                    scale: selectedCardId === (p.name || p.team_name) ? 1.02 : 1,
+                    zIndex: selectedCardId === (p.name || p.team_name) ? 50 : 1,
+                    boxShadow: selectedCardId === (p.name || p.team_name) ? '0 25px 50px -12px rgba(0,0,0,0.15)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
                   style={{ 
                     backgroundColor: 'white', 
-                    padding: '40px', 
+                    padding: isMobile ? '24px' : '40px', 
                     borderRadius: '32px', 
                     border: '4px solid #dcfce7',
                     cursor: 'pointer',
-                    position: 'relative'
+                    position: 'relative',
+                    width: '100%',
+                    boxSizing: 'border-box'
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                    <div style={{ fontWeight: '1000', fontSize: '24px', color: '#1e293b' }}>{p.name}</div>
+                    <div style={{ fontWeight: '1000', fontSize: isMobile ? '22px' : '28px', color: '#1e293b' }}>{p.name || p.team_name}</div>
                     <div style={{ backgroundColor: '#dcfce7', color: '#10b981', padding: '8px 16px', borderRadius: '12px', fontSize: '12px', fontWeight: '900', textTransform: 'uppercase' }}>{p.status}</div>
                   </div>
-                  <div style={{ fontSize: '16px', color: '#64748b', fontWeight: '800' }}>Team Lead: {p.lead}</div>
+                  <div style={{ fontSize: isMobile ? '15px' : '18px', color: '#64748b', fontWeight: '800' }}>Team Lead: {p.lead || p.team_lead_name || 'Not Assigned'}</div>
                 </motion.div>
               ))}
             </div>
@@ -824,10 +867,11 @@ export default function SuperAdminHomeWeb() {
                 {navItems.map(item => {
                   const Icon = item.icon;
                   const isActive = activeTab === item.id;
+                  const displayLabel = item.label;
                   return (
                     <div key={item.id} style={styles.dockItem(isActive)} onClick={() => setActiveTab(item.id)}>
                       <div style={{ position: 'relative' }}>
-                        <Icon size={isMobile ? 18 : 20} style={{ strokeWidth: '2.5px' }} />
+                        <Icon size={isMobile ? 14 : 17} style={{ strokeWidth: '2.5px' }} />
                         
                         {item.id === 'thread' && unreadCount > 0 && (
                           <div style={{
@@ -853,7 +897,7 @@ export default function SuperAdminHomeWeb() {
                           </div>
                         )}
                       </div>
-                      <span style={styles.dockText}>{item.label}</span>
+                      <span style={styles.dockText}>{displayLabel}</span>
                     </div>
                   );
                 })}

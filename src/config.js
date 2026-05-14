@@ -32,6 +32,7 @@ export const API_ENDPOINTS = {
   REWARD_DELETE: (id) => `${BASE_URL}/api/rewards/${id}`,
   REWARD_CATEGORIES: `${BASE_URL}/api/rewards/categories`,
   REWARDS_GIVE: `${BASE_URL}/api/rewards`,
-  LEADERBOARD_ALL: `${BASE_URL}/api/employees/leaderboard/all`,
+  REWARDS_LEADERBOARD: `${BASE_URL}/api/rewards/leaderboard`,
+  LEADERBOARD_ALL: `${BASE_URL}/api/rewards/leaderboard`,
   SUGGESTIONS_ADMIN: `${BASE_URL}/api/suggestions/admin`,
 };
