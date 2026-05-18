@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ArrowLeft, Download, Calendar, Clock, Search, RefreshCw, 
-  UserCheck, FileText, LogOut
+  UserCheck, FileText, LogOut, MapPin
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import 'jspdf-autotable';
@@ -131,6 +131,19 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
 
 
 
+      const calculateWorkHours = (inT, outT) => {
+        if (!inT || !outT || inT === '--:--' || outT === '--:--' || inT === '----' || outT === '----') return '00:00';
+        try {
+          const [inH, inM] = inT.split(':').map(Number);
+          const [outH, outM] = outT.split(':').map(Number);
+          let diff = (outH * 60 + outM) - (inH * 60 + inM);
+          if (diff < 0) diff += 1440; // Handle overnight shifts
+          const h = Math.floor(diff / 60).toString().padStart(2, '0');
+          const m = (diff % 60).toString().padStart(2, '0');
+          return `${h}:${m}`;
+        } catch (e) { return '00:00'; }
+      };
+
       // Step 3: Map exact DB column names to UI fields
       // DB schema: user_id, punch_date, in_time, out_time, work_time, status, remark, punchin_location, punchout_location
       const mapped = allLogs.map(log => {
@@ -146,7 +159,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
           punch_date: log.punch_date || log.date || '',
           in_time: log.in_time || log.punch_in || log.check_in || '--:--',
           out_time: log.out_time || log.punch_out || log.check_out || '--:--',
-          work_hrs: log.work_time || log.work_hours || log.work_hrs || '00:00',
+          work_hrs: log.work_time || log.work_hours || log.total_time || log.duration || calculateWorkHours(log.in_time || log.punch_in, log.out_time || log.punch_out) || '00:00',
           punch_in_location: log.punchin_location || log.punch_in_location || log.check_in_location || '',
           punch_out_location: log.punchout_location || log.punch_out_location || log.check_out_location || '',
           status: (log.status || (log.in_time && log.in_time !== '--:--' ? 'P' : 'A')).toUpperCase(),
@@ -301,7 +314,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
     tableTitle: { fontSize: '11px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase' },
     tableValue: { fontSize: '16px', fontWeight: '900', color: '#0B1E3F' },
 
-    table: { width: '100%', borderCollapse: 'collapse' },
+    table: { width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' },
     th: { textAlign: 'left', padding: isMobile ? '12px 16px' : '16px 24px', fontSize: isMobile ? '9px' : '10px', fontWeight: '800', color: '#94A3B8', textTransform: 'uppercase', borderBottom: '1px solid #F1F5F9' },
     td: { padding: '20px 12px', borderBottom: '1px solid #F8FAFC' },
     empCell: { display: 'flex', alignItems: 'center', gap: '12px' },
@@ -406,22 +419,21 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
           <table style={styles.table}>
             <thead>
               <tr style={{ borderBottom: '1.5px solid #F8FAFC' }}>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>EMPLOYEE</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>EMPLOYEE ID</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>DATE</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>IN TIME</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>OUT TIME</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>WORKING HOURS</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>STATUS</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>IN LOCATION</th>
-                <th style={{ ...styles.th, padding: isMobile ? '15px 12px' : '20px 24px' }}>OUT LOCATION</th>
+                <th style={{ ...styles.th, width: '22%', padding: '20px 16px', paddingLeft: '60px' }}>EMPLOYEE</th>
+                <th style={{ ...styles.th, width: '10%', padding: '20px 16px' }}>EMPLOYEE ID</th>
+                <th style={{ ...styles.th, width: '15%', padding: '20px 16px', paddingLeft: '38px' }}>DATE</th>
+                <th style={{ ...styles.th, width: '10%', padding: '20px 16px', paddingLeft: '38px' }}>PUNCH IN</th>
+                <th style={{ ...styles.th, width: '10%', padding: '20px 16px', paddingLeft: '38px' }}>PUNCH OUT</th>
+                <th style={{ ...styles.th, width: '10%', padding: '20px 16px' }}>WORK HRS</th>
+                <th style={{ ...styles.th, width: '8%', padding: '20px 16px', textAlign: 'center' }}>STATUS</th>
+                <th style={{ ...styles.th, width: '15%', padding: '20px 16px', paddingLeft: '38px' }}>AUDIT LOCATION</th>
               </tr>
             </thead>
             <tbody>
               {loading && filteredLogs.length === 0 ? (
-                <tr><td colSpan="9" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>Synchronizing record history...</td></tr>
+                <tr><td colSpan="8" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>Synchronizing record history...</td></tr>
               ) : filteredLogs.length === 0 ? (
-                <tr><td colSpan="9" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>No history found for the selected period.</td></tr>
+                <tr><td colSpan="8" style={{ padding: '100px', textAlign: 'center', color: '#94A3B8', fontWeight: '700' }}>No history found for the selected period.</td></tr>
               ) : (
                 filteredLogs.map((log, i) => {
                   const inT = log.in_time || log.punch_in;
@@ -439,7 +451,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
                       onMouseOver={e => e.currentTarget.style.backgroundColor = '#F8FAFC'}
                       onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}
                     >
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '20px 24px' }}>
+                      <td style={{ ...styles.td, padding: '16px' }}>
                         <div style={styles.empCell}>
                           {log.profile_pic ? (
                             <img src={log.profile_pic} style={styles.avatar} alt="" />
@@ -454,51 +466,49 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
                           </div>
                         </div>
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', fontWeight: '800', color: '#64748B', fontSize: isMobile ? '11px' : '13px' }}>
+                      <td style={{ ...styles.td, padding: '16px', fontWeight: '800', color: '#64748B', fontSize: '13px' }}>
                         {log.user_id || log.Empcode}
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700', fontSize: isMobile ? '10px' : '12px', whiteSpace: 'nowrap' }}>
+                      <td style={{ ...styles.td, padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700', fontSize: '12px', whiteSpace: 'nowrap' }}>
                           <Calendar size={14} color="#CBD5E1" />
                           {formatLongDate(log.punch_date || log.date)}
                         </div>
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#3B82F6', fontWeight: '800', fontSize: isMobile ? '11px' : '13px' }}>
-                        {log.in_time || log.punch_in || '--:--'}
+                      <td style={{ ...styles.td, padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#3B82F6', fontWeight: '800', fontSize: '13px' }}>
+                          <Clock size={14} color="#3B82F6" />
+                          {log.in_time || log.punch_in || '--:--'}
+                        </div>
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontWeight: '700', fontSize: isMobile ? '11px' : '13px' }}>
-                        {log.out_time || log.punch_out || '--:--'}
+                      <td style={{ ...styles.td, padding: '16px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#64748B', fontWeight: '700', fontSize: '13px' }}>
+                          <Clock size={14} color="#CBD5E1" />
+                          {log.out_time || log.punch_out || '--:--'}
+                        </div>
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', fontWeight: '900', color: '#0F172A', fontSize: isMobile ? '11px' : '13px' }}>
-                        {log.work_hrs || log.work_time || '00:00'} <span style={{ fontSize: '9px', color: '#94A3B8' }}>HOURS</span>
+                      <td style={{ ...styles.td, padding: '16px', fontWeight: '900', color: '#0F172A', fontSize: '13px' }}>
+                        {log.work_hrs || '0:00'}<br/><span style={{ fontSize: '9px', color: '#94A3B8', textTransform: 'uppercase' }}>HOURS</span>
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px' }}>
-                        <div style={{ ...styles.statusBadge(bg, color), padding: '4px 10px' }}>
+                      <td style={{ ...styles.td, padding: '16px', textAlign: 'center' }}>
+                        <div style={{ ...styles.statusBadge(bg, color), padding: '4px 10px', display: 'inline-flex' }}>
                           <div style={{ width: '5px', height: '5px', borderRadius: '50%', backgroundColor: color }}></div>
                           {status}
                         </div>
                       </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
-                        <a 
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punch_in_location || 'NAVABHARATH TECHNOLOGIES')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: '#2563EB', textDecoration: 'none' }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {log.punch_in_location || '---'}
-                        </a>
-                      </td>
-                      <td style={{ ...styles.td, padding: isMobile ? '15px 12px' : '18px 24px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
-                        <a 
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punch_out_location || 'NAVABHARATH TECHNOLOGIES')}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{ color: '#2563EB', textDecoration: 'none' }}
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          {log.punch_out_location || '---'}
-                        </a>
+                      <td style={{ ...styles.td, padding: '16px', color: '#64748B', fontSize: '12px', fontWeight: '600', whiteSpace: 'nowrap' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <MapPin size={14} color="#CBD5E1" />
+                          <a 
+                            href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(log.punch_in_location || log.punch_out_location || 'NAVABHARATH TECHNOLOGIES')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: '#64748B', textDecoration: 'none' }}
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            {log.punch_in_location || log.punch_out_location || 'Office Zone'}
+                          </a>
+                        </div>
                       </td>
                     </tr>
                   );

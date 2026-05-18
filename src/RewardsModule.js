@@ -3,6 +3,13 @@ import { Trophy, Star, Award, Zap, ArrowLeft, ShieldCheck, UserCheck, Flame, Edi
 import { useAuth } from './AuthContext';
 import { API_ENDPOINTS } from './config';
 
+const parsePoints = (p) => {
+    if (p === null || p === undefined) return 0;
+    if (typeof p === 'number') return p;
+    const cleaned = String(p).replace(/[^0-9.]/g, '');
+    return parseFloat(cleaned) || 0;
+};
+
 export default function RewardsModule({ onBack }) {
     const { user } = useAuth();
     const [winWidth, setWinWidth] = React.useState(window.innerWidth);
@@ -16,14 +23,8 @@ export default function RewardsModule({ onBack }) {
     const [selectedHistoryUser, setSelectedHistoryUser] = React.useState(null);
     const [startDate, setStartDate] = React.useState('');
     const [endDate, setEndDate] = React.useState('');
-    const [availableAwards] = React.useState([
-        { id: 'visionary', title: "Visionary Lead", rep: 200, desc: "Acknowledge exceptional leadership and vision." },
-        { id: 'achiever', title: "Goal Achiever", rep: 150, desc: "Recognize consistent goal hitting and performance." },
-        { id: 'growth', title: "Team Growth", rep: 150, desc: "Reward contributions to team development." },
-        { id: 'star', title: "Star Performer", rep: 50, desc: "Acknowledge exceptional output and dedication." },
-        { id: 'solver', title: "Problem Solver", rep: 30, desc: "Recognize innovative solutions and quick thinking." },
-        { id: 'collaborator', title: "Collaborative Hero", rep: 20, desc: "Reward great teamwork and unselfish assistance." }
-    ]);
+    const [availableAwards, setAvailableAwards] = React.useState([]);
+    const [totalCirculating, setTotalCirculating] = React.useState(0);
 
     React.useEffect(() => {
         const handleResize = () => setWinWidth(window.innerWidth);
@@ -31,16 +32,53 @@ export default function RewardsModule({ onBack }) {
         return () => window.removeEventListener('resize', handleResize);
     }, []);
 
+
+
     const fetchInitialData = async () => {
         if (!user?.token) return;
         try {
-            const rewRes = await fetch(API_ENDPOINTS.REWARDS_HISTORY, { headers: { 'Authorization': `Bearer ${user.token}` } });
-            if (rewRes.ok) {
+            // THE USER ASKED TO USE /api/rewards/leaderboard FOR LEADERBOARD DATA
+            // AND TO ENSURE NO EMPTY DATA IS DISPLAYED BY FETCHING HISTORY AND TIERS DYNAMICALLY
+            const [rewRes, awardRes, lbRes] = await Promise.all([
+                fetch(API_ENDPOINTS.REWARDS_HISTORY, { headers: { 'Authorization': `Bearer ${user.token}` } }).catch(() => null),
+                fetch(API_ENDPOINTS.REWARDS, { headers: { 'Authorization': `Bearer ${user.token}` } }).catch(() => null),
+                fetch(API_ENDPOINTS.REWARDS_LEADERBOARD, { headers: { 'Authorization': `Bearer ${user.token}` } }).catch(() => null)
+            ]);
+
+            if (rewRes?.ok) {
                 const data = await rewRes.json();
-                setRewards(Array.isArray(data) ? data : (data.data || []));
+                setRewards(Array.isArray(data) ? data : (data.data || data.history || []));
+                // Extract total points if provided by backend
+                const total = data.totalPoints || data.total_points || data.totalCirculating || data.total_circulating || 0;
+                if (total > 0) setTotalCirculating(total);
             }
 
-            setRewardNames(["Visionary Lead", "Goal Achiever", "Team Growth", "Star Performer", "Problem Solver", "Collaborative Hero"]);
+            if (lbRes?.ok) {
+                const data = await lbRes.json();
+                const list = Array.isArray(data) ? data : (data.data || []);
+                setLeaderboard(list.map(item => {
+                    // Handle cases where data might be nested inside an 'employee' or 'user' object
+                    const base = item.employee || item.user || item;
+                    return {
+                        ...item,
+                        name: base.name || base.employee_name || base.user_name || item.name || 'Anonymous Member',
+                        total_points: parsePoints(base.total_points || base.points || base.score || base.total_score || base.rep || base.reputation || item.totalPoints || item.totalScore || item.total_points || item.points)
+                    };
+                }));
+            }
+
+            if (awardRes?.ok) {
+                const data = await awardRes.json();
+                const list = Array.isArray(data) ? data : (data.data || data.rewards || data.categories || []);
+                const mapped = list.map(a => ({
+                    id: a.id || a._id || Math.random().toString(),
+                    title: a.title || a.name || a.reward_name || 'Unnamed Reward',
+                    rep: a.rep || a.points || a.reputation || 0,
+                    desc: a.desc || a.description || ''
+                }));
+                setAvailableAwards(mapped);
+                setRewardNames(mapped.map(a => a.title));
+            }
 
             let allStaff = [];
             try {
@@ -100,7 +138,15 @@ export default function RewardsModule({ onBack }) {
             });
             if (res.ok) {
                 const data = await res.json();
-                setLeaderboard(Array.isArray(data) ? data : (data.data || []));
+                const list = Array.isArray(data) ? data : (data.data || []);
+                setLeaderboard(list.map(item => {
+                    const base = item.employee || item.user || item;
+                    return {
+                        ...item,
+                        name: base.name || base.employee_name || base.user_name || item.name || 'Anonymous Member',
+                        total_points: parsePoints(base.total_points || base.points || base.score || base.total_score || base.rep || base.reputation || item.totalPoints || item.totalScore || item.total_points || item.points)
+                    };
+                }));
             }
         } catch (err) { setLeaderboard([]); }
     };
@@ -197,9 +243,9 @@ export default function RewardsModule({ onBack }) {
 
                         {/* Points Display */}
                         <div style={{ textAlign: winWidth < 600 ? 'left' : 'center', borderRight: winWidth < 900 ? 'none' : '1.5px solid rgba(255,255,255,0.1)', paddingRight: '10px' }}>
-                            <p style={{ margin: '0 0 3px 0', fontSize: '8px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Total Points Circulating</p>
+                            <p style={{ margin: '0 0 3px 0', fontSize: '8px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px' }}>Top Contributor Score</p>
                             <h3 style={{ margin: 0, fontSize: winWidth < 768 ? '18px' : '28px', fontWeight: '950', color: '#facc15' }}>
-                                {rewards.reduce((acc, r) => acc + (Number(r.points) || 0), 0).toLocaleString()} <span style={{ fontSize: '12px' }}>REP</span>
+                                {leaderboard[0] ? parsePoints(leaderboard[0].total_points).toLocaleString() : '0'} <span style={{ fontSize: '12px' }}>REP</span>
                             </h3>
                         </div>
 
@@ -240,7 +286,7 @@ export default function RewardsModule({ onBack }) {
                                                             <p style={{ margin: '2px 0 0 0', fontSize: '10px', color: '#94a3b8', fontWeight: '700' }}>Aggregated results per member</p>
                                                         </div>
                                                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                                            {Array.from(new Set(filteredRewards.map(r => r.employee_id))).length > 5 && (
+                                                            {Array.from(new Set(filteredRewards.map(r => r.employee_id || r.userId))).length > 5 && (
                                                                 <button 
                                                                     onClick={() => setShowAllFeed(!showAllFeed)}
                                                                     style={{ 
@@ -250,34 +296,42 @@ export default function RewardsModule({ onBack }) {
                                                                 </button>
                                                             )}
                                                             <div style={{ fontSize: '10px', fontWeight: '800', color: '#3b82f6', background: '#eff6ff', padding: '4px 8px', borderRadius: '8px' }}>
-                                                                {Array.from(new Set(filteredRewards.map(r => r.employee_id))).length} Members
+                                                                {Array.from(new Set(filteredRewards.map(r => r.employee_id || r.userId))).length} Members
                                                             </div>
                                                         </div>
                                                     </div>
                                                     {(() => {
-                                                        const employeeStats = Array.from(new Set(filteredRewards.map(r => r.employee_id))).map(id => {
-                                                            const userRewards = filteredRewards.filter(r => String(r.employee_id) === String(id));
-                                                            const totalRep = userRewards.reduce((sum, r) => sum + (Number(r.points) || 0), 0);
+                                                        const employeeStats = Array.from(new Set(filteredRewards.map(r => r.employee_id || r.userId))).map(id => {
+                                                            const userRewards = filteredRewards.filter(r => String(r.employee_id || r.userId) === String(id));
+                                                            const lbEntry = leaderboard.find(l => String(l.id || l.employee_id || l.userId) === String(id));
+                                                            
+                                                            // Prioritize the actual total from the leaderboard over the sum of visible feed items
+                                                            const totalRep = lbEntry ? parsePoints(lbEntry.total_points) : userRewards.reduce((sum, r) => {
+                                                                const p = r.points || r.rep || r.reward_points || r.points_earned || r.value || r.amount || 0;
+                                                                return sum + parsePoints(p);
+                                                            }, 0);
                                                             return { id, totalRep, userRewards };
                                                         }).sort((a, b) => b.totalRep - a.totalRep);
 
                                                         const displayedStats = showAllFeed ? employeeStats : employeeStats.slice(0, 5);
                                                         
-                                                        return displayedStats.map(({ id: empId, totalRep, userRewards }) => {
+                                                        return displayedStats.map(({ id: empId, totalRep, userRewards }, idx) => {
                                                             const latest = userRewards.reduce((prev, current) => (new Date(prev.created_at || prev.date) > new Date(current.created_at || current.date)) ? prev : current, userRewards[0]);
                                                             return (
                                                                 <div key={empId} onClick={() => setSelectedHistoryUser(empId)} style={{ background: 'white', padding: winWidth < 768 ? '12px' : '18px', borderRadius: '20px', border: '1.5px solid #f1f5f9', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center', transition: 'transform 0.2s' }} onMouseEnter={e => e.currentTarget.style.transform = 'translateY(-2px)'} onMouseLeave={e => e.currentTarget.style.transform = 'translateY(0)'}>
                                                                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                                        <div style={{ width: winWidth < 480 ? '34px' : '40px', height: winWidth < 480 ? '34px' : '40px', borderRadius: '10px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f1f5f9' }}><Award size={winWidth < 480 ? 16 : 20} color="#0369a1" /></div>
+                                                                        <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#f8fafc', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1.5px solid #f1f5f9', fontSize: '12px', fontWeight: '1000', color: '#64748b' }}>
+                                                                            #{idx + 1}
+                                                                        </div>
                                                                         <div>
                                                                             <div style={{ fontSize: winWidth < 480 ? '12px' : '14px', fontWeight: '1000', color: '#0f172a' }}>{resolveEmployeeName(empId)}</div>
                                                                             <div style={{ fontSize: '9px', color: '#64748b', fontWeight: '700' }}>
-                                                                                {userRewards.length} awards • {latest.reward_name || 'Excellence'}
+                                                                                {userRewards.length} recognitions • {latest.reward_name || 'Team Growth'}
                                                                             </div>
                                                                         </div>
                                                                     </div>
                                                                     <div style={{ textAlign: 'right' }}>
-                                                                        <div style={{ fontSize: '14px', fontWeight: '1000', color: '#10b981' }}>+{totalRep}</div>
+                                                                        <div style={{ fontSize: '14px', fontWeight: '1000', color: '#10b981' }}>+{totalRep.toLocaleString()}</div>
                                                                         <div style={{ fontSize: '8px', fontWeight: '800', color: '#94a3b8', textTransform: 'uppercase' }}>REP</div>
                                                                     </div>
                                                                 </div>
@@ -361,18 +415,25 @@ export default function RewardsModule({ onBack }) {
                                     <p style={{ margin: '10px 0 24px 0', fontSize: '13px', color: '#94a3b8', lineHeight: '1.6' }}>Celebrate the champions pushing our organization forward with exceptional dedication.</p>
                                     
                                     {leaderboard.length > 0 && (
-                                        <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.1)' }}>
-                                            <div style={{ fontSize: '10px', fontWeight: '900', color: '#facc15', textTransform: 'uppercase', marginBottom: '12px' }}>Top Contributor</div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                                                <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#facc15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '1000', color: '#0f172a' }}>
-                                                    {leaderboard[0].name.charAt(0)}
-                                                </div>
-                                                <div>
-                                                    <div style={{ fontSize: '15px', fontWeight: '900', color: '#ffffff' }}>{leaderboard[0].name}</div>
-                                                    <div style={{ fontSize: '11px', color: '#94a3b8' }}>{leaderboard[0].total_points} Reputation Points</div>
+                                        <>
+                                            <div style={{ background: 'rgba(255,255,255,0.05)', padding: '20px', borderRadius: '20px', border: '1.5px solid rgba(255,255,255,0.1)', marginBottom: '20px' }}>
+                                                <div style={{ fontSize: '10px', fontWeight: '900', color: '#facc15', textTransform: 'uppercase', marginBottom: '12px' }}>Top Contributor</div>
+                                                <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
+                                                    <div style={{ width: '44px', height: '44px', borderRadius: '12px', background: '#facc15', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', fontWeight: '1000', color: '#0f172a' }}>
+                                                        {leaderboard[0].name.charAt(0)}
+                                                    </div>
+                                                    <div>
+                                                        <div style={{ fontSize: '15px', fontWeight: '900', color: '#ffffff' }}>{leaderboard[0].name}</div>
+                                                        <div style={{ fontSize: '11px', color: '#94a3b8' }}>{leaderboard[0].total_points || 0} Reputation Points</div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                        </div>
+                                            <button style={{ 
+                                                width: '100%', padding: '15px', borderRadius: '15px', border: 'none', backgroundColor: '#ffffff', color: '#0f172a', fontWeight: '1000', fontSize: '12px', textTransform: 'uppercase', cursor: 'pointer' 
+                                            }}>
+                                                Grant Recognition
+                                            </button>
+                                        </>
                                     )}
                                 </div>
                             </div>
