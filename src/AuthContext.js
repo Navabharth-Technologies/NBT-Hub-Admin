@@ -16,7 +16,7 @@ export const AuthProvider = ({ children }) => {
   // Restore session from localStorage on app load
   useEffect(() => {
     const restoreSession = async () => {
-      const savedUser = localStorage.getItem('navAuthUser');
+      const savedUser = localStorage.getItem('user') || localStorage.getItem('navAuthUser');
       if (savedUser) {
         const parsed = JSON.parse(savedUser);
         const isAdminRole = parsed.role === 'Super Admin' || parsed.role === 'CEO' || parsed.role === 'Founder' || (parsed.email && parsed.email.includes('dinesh'));
@@ -87,6 +87,7 @@ export const AuthProvider = ({ children }) => {
         };
 
         setUser(authData);
+        localStorage.setItem('user', JSON.stringify(authData));
         localStorage.setItem('navAuthUser', JSON.stringify(authData));
         localStorage.setItem('token', activeToken);
         localStorage.setItem('userRole', data.user.role);
@@ -105,6 +106,7 @@ export const AuthProvider = ({ children }) => {
 
   const logout = () => {
     setUser(null);
+    localStorage.removeItem('user');
     localStorage.removeItem('navAuthUser');
     localStorage.removeItem('token');
     localStorage.removeItem('userRole');
