@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { useAuth } from './AuthContext';
 import { Mail, Lock, LogIn, Info, Eye, EyeOff } from 'lucide-react';
 import logoImg from './logo.png';
-const loginLogo = logoImg; 
-const loginBg = ""; 
+const loginLogo = logoImg;
+const loginBg = "";
 
 
 export default function LoginScreen() {
@@ -16,29 +16,29 @@ export default function LoginScreen() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const styles = {
-    container: { 
-      minHeight: '100vh', 
-      display: 'flex', 
-      alignItems: 'center', 
-      justifyContent: 'center', 
-      padding: '20px', 
+    container: {
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
       backgroundImage: `url(${loginBg})`,
       backgroundSize: 'cover',
       backgroundPosition: 'center'
     },
-    card: { 
-      width: '100%', 
-      maxWidth: '450px', 
-      backgroundColor: 'rgba(255, 255, 255, 0.95)', 
+    card: {
+      width: '100%',
+      maxWidth: '450px',
+      backgroundColor: 'rgba(255, 255, 255, 0.95)',
       backdropFilter: 'blur(10px)',
-      borderRadius: '40px', 
-      padding: '50px 40px', 
-      boxShadow: '0 30px 60px rgba(0,0,0,0.12)', 
-      textAlign: 'center' 
+      borderRadius: '40px',
+      padding: '50px 40px',
+      boxShadow: '0 30px 60px rgba(0,0,0,0.12)',
+      textAlign: 'center'
     },
-    logo: { 
-      width: '100px', 
-      height: 'auto', 
+    logo: {
+      width: '100px',
+      height: 'auto',
       maxHeight: '100px',
       objectFit: 'contain',
       margin: '0 auto 25px',
@@ -114,7 +114,7 @@ export default function LoginScreen() {
               onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
             />
-            <button 
+            <button
               type="button"
               style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', padding: '0 5px' }}
               onClick={() => setShowPassword(!showPassword)}
@@ -124,8 +124,8 @@ export default function LoginScreen() {
           </div>
         </div>
 
-        <button 
-          style={{...styles.loginBtn, opacity: isLoggingIn ? 0.7 : 1, cursor: isLoggingIn ? 'not-allowed' : 'pointer'}} 
+        <button
+          style={{ ...styles.loginBtn, opacity: isLoggingIn ? 0.7 : 1, cursor: isLoggingIn ? 'not-allowed' : 'pointer' }}
           onClick={handleLogin}
           disabled={isLoggingIn}
         >

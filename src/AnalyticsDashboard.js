@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { ArrowLeft } from 'lucide-react';
 import { API_ENDPOINTS } from './config';
- 
- export default function AnalyticsDashboard({ onBack }) {
+
+export default function AnalyticsDashboard({ onBack }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -11,7 +11,7 @@ import { API_ENDPOINTS } from './config';
       setLoading(true);
       try {
         const token = String(localStorage.getItem('token') || '').trim();
-        const headers = { 
+        const headers = {
           'Authorization': token && token !== 'undefined' ? `Bearer ${token}` : '',
           'Accept': 'application/json'
         };
@@ -33,7 +33,7 @@ import { API_ENDPOINTS } from './config';
           { month: 'Jan', score: 40, color: '#93c5fd' },
           { month: 'Feb', score: 65, color: '#3b82f6' },
           { month: 'Mar', score: 85, color: '#2563eb' },
-          { month: 'Current', score: Math.min(100, userCount * 5), color: '#1e40af' }, 
+          { month: 'Current', score: Math.min(100, userCount * 5), color: '#1e40af' },
         ];
 
         // Compute completion/activity rate
@@ -53,10 +53,10 @@ import { API_ENDPOINTS } from './config';
             label: 'Highly Active'
           }));
         } else {
-           engagement = [
-             { name: 'Development Core', score: 92, color: '#10b981', label: 'Active' },
-             { name: 'Marketing & Sales', score: 85, color: '#3b82f6', label: 'Active' }
-           ];
+          engagement = [
+            { name: 'Development Core', score: 92, color: '#10b981', label: 'Active' },
+            { name: 'Marketing & Sales', score: 85, color: '#3b82f6', label: 'Active' }
+          ];
         }
 
         setData({
@@ -73,8 +73,8 @@ import { API_ENDPOINTS } from './config';
     fetchAnalytics();
   }, []);
   const styles = {
-    container: { 
-      fontFamily: 'system-ui, sans-serif', 
+    container: {
+      fontFamily: 'system-ui, sans-serif',
       padding: '30px 40px',
       marginTop: '10px'
     },
@@ -92,8 +92,8 @@ import { API_ENDPOINTS } from './config';
     <div style={styles.container}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
         {onBack && (
-          <div 
-            onClick={onBack} 
+          <div
+            onClick={onBack}
             style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #bfdbfe' }}
           >
             <ArrowLeft size={20} color="#1e293b" />
@@ -101,7 +101,7 @@ import { API_ENDPOINTS } from './config';
         )}
         <h2 style={{ ...styles.header, marginBottom: 0 }}>Advanced Analytics Dashboard</h2>
       </div>
-      
+
       {loading ? (
         <div style={{ textAlign: 'center', padding: '100px', fontWeight: '800', color: '#64748B' }}>Syncing Platform Analytics...</div>
       ) : !data ? (
@@ -123,38 +123,38 @@ import { API_ENDPOINTS } from './config';
           <div style={styles.panel}>
             <div style={styles.title}>Course Completion vs Dropout Rates</div>
             <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '180px', flexDirection: 'column' }}>
-              <div style={{ 
-                width: '130px', 
-                height: '130px', 
-                borderRadius: '50%', 
-                background: `conic-gradient(#10b981 0% ${data.completionRate || 78}%, #ef4444 ${data.completionRate || 78}% 100%)`, 
-                display: 'flex', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                boxShadow: '0 4px 10px rgba(0,0,0,0.05)' 
+              <div style={{
+                width: '130px',
+                height: '130px',
+                borderRadius: '50%',
+                background: `conic-gradient(#10b981 0% ${data.completionRate || 78}%, #ef4444 ${data.completionRate || 78}% 100%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 4px 10px rgba(0,0,0,0.05)'
               }}>
                 <div style={{ width: '90px', height: '90px', borderRadius: '50%', backgroundColor: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                   <span style={{fontSize: '22px', fontWeight: '800', color: '#1e293b'}}>{data.completionRate || 78}%</span>
+                  <span style={{ fontSize: '22px', fontWeight: '800', color: '#1e293b' }}>{data.completionRate || 78}%</span>
                 </div>
               </div>
-              <div style={{marginTop: '20px', display: 'flex', gap: '20px'}}>
-                <div style={{fontSize: '12px', color: '#1e293b', fontWeight: 'bold'}}><span style={{color: '#10b981'}}>■</span> Completed</div>
-                <div style={{fontSize: '12px', color: '#1e293b', fontWeight: 'bold'}}><span style={{color: '#ef4444'}}>■</span> Dropped</div>
+              <div style={{ marginTop: '20px', display: 'flex', gap: '20px' }}>
+                <div style={{ fontSize: '12px', color: '#1e293b', fontWeight: 'bold' }}><span style={{ color: '#10b981' }}>■</span> Completed</div>
+                <div style={{ fontSize: '12px', color: '#1e293b', fontWeight: 'bold' }}><span style={{ color: '#ef4444' }}>■</span> Dropped</div>
               </div>
             </div>
           </div>
-          
+
           <div style={styles.panel}>
             <div style={styles.title}>Team Engagement Levels</div>
-            <div style={{marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px'}}>
+            <div style={{ marginTop: '12px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {(data.teamEngagement || []).map((team, idx) => (
                 <div key={idx}>
-                  <div style={{display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px'}}>
-                     <span style={{fontWeight: 'bold', color: '#1e293b'}}>{team.name}</span>
-                     <span style={{color: team.color || '#3b82f6', fontWeight: '700'}}>{team.label || 'Active'} ({team.score}%)</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', marginBottom: '6px' }}>
+                    <span style={{ fontWeight: 'bold', color: '#1e293b' }}>{team.name}</span>
+                    <span style={{ color: team.color || '#3b82f6', fontWeight: '700' }}>{team.label || 'Active'} ({team.score}%)</span>
                   </div>
-                  <div style={{height: '8px', background: '#f1f5f9', borderRadius: '4px'}}>
-                    <div style={{width: `${team.score}%`, height: '100%', background: team.color || '#3b82f6', borderRadius: '4px'}}></div>
+                  <div style={{ height: '8px', background: '#f1f5f9', borderRadius: '4px' }}>
+                    <div style={{ width: `${team.score}%`, height: '100%', background: team.color || '#3b82f6', borderRadius: '4px' }}></div>
                   </div>
                 </div>
               ))}

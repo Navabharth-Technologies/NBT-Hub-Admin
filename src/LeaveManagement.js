@@ -355,7 +355,6 @@ export default function LeaveManagement({ onBack }) {
       <div style={s.tabs}>
         <div style={s.tab(activeTab === 'PENDING')} onClick={() => setActiveTab('PENDING')}>Pending Requests</div>
         <div style={s.tab(activeTab === 'HISTORY')} onClick={() => setActiveTab('HISTORY')}>Leave History</div>
-        <div style={s.tab(activeTab === 'EMPLOYEE_LEAVES')} onClick={() => setActiveTab('EMPLOYEE_LEAVES')}>Employee Leave</div>
       </div>
 
       <div style={s.searchContainer}>
@@ -368,14 +367,6 @@ export default function LeaveManagement({ onBack }) {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        {activeTab === 'EMPLOYEE_LEAVES' && (
-          <input 
-            type="date"
-            value={filterDate}
-            onChange={(e) => setFilterDate(e.target.value)}
-            style={{ ...s.searchInput, flex: 'none', width: 'auto' }}
-          />
-        )}
       </div>
 
       <div style={{ display: 'flex', flexDirection: 'column' }}>
@@ -383,7 +374,7 @@ export default function LeaveManagement({ onBack }) {
           <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>Synchronizing Leave Database...</div>
         ) : filteredRequests.length === 0 ? (
           <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>No leave requests found for HR/PM.</div>
-        ) : (activeTab === 'HISTORY' || activeTab === 'EMPLOYEE_LEAVES') ? (
+        ) : activeTab === 'HISTORY' ? (
           <div style={{ backgroundColor: 'white', borderRadius: '25px', overflowX: 'auto', border: '1.5px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
             <table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto', borderCollapse: 'collapse', textAlign: 'left' }}>
               <thead style={{ backgroundColor: '#f8fafc', borderBottom: '1.5px solid #f1f5f9' }}>
@@ -479,7 +470,7 @@ export default function LeaveManagement({ onBack }) {
           >
             <motion.div 
               initial={{ scale: 0.95, y: 30, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, y: 30, opacity: 0 }}
-              style={{ backgroundColor: 'white', width: '100%', maxWidth: '850px', borderRadius: '40px', padding: isMobile ? '20px' : '45px', position: 'relative', boxShadow: '0 30px 70px rgba(0,0,0,0.3)', overflowY: 'auto', maxHeight: '95vh' }}
+              style={{ backgroundColor: 'white', width: '100%', maxWidth: '850px', borderRadius: '40px', padding: isMobile ? '20px 20px 100px 20px' : '45px 45px 120px 45px', position: 'relative', boxShadow: '0 30px 70px rgba(0,0,0,0.3)', overflowY: 'auto', maxHeight: '95vh' }}
               onClick={e => e.stopPropagation()}
             >
               {/* Header section */}
@@ -624,7 +615,7 @@ export default function LeaveManagement({ onBack }) {
 
               {/* Action Buttons */}
               {String(selectedLeave.status || '').toUpperCase() === 'PENDING' && 
-               ['PROJECT MANAGER', 'HR', 'PM'].some(r => String(selectedLeave.role || '').toUpperCase().includes(r)) && (
+               ['PROJECT MANAGER', 'HR', 'PM', 'HUMAN RESOURCE'].some(r => String(selectedLeave.role || '').toUpperCase().includes(r)) && (
                 <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '15px', width: '100%' }}>
                   <button 
                     onClick={() => handleAction(selectedLeave.id, 'Rejected', adminRemarks)}

@@ -189,12 +189,12 @@ export default function ProfileScreen({ onBack }) {
     avatar: { width: isMobile ? '80px' : '100px', height: isMobile ? '80px' : '100px', borderRadius: '20px', backgroundColor: '#f8fafc', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '40px', color: '#2563EB', fontWeight: '800', overflow: 'hidden' },
     editAvatarBtn: { position: 'absolute', bottom: '-5px', right: '-5px', backgroundColor: 'white', width: '28px', height: '28px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 10px rgba(0,0,0,0.1)', cursor: 'pointer', border: '1px solid #e2e8f0', color: '#2563EB' },
     userName: { fontSize: isMobile ? '24px' : '28px', fontWeight: '1000', color: '#0B1E3F', margin: '0', letterSpacing: '-0.5px' },
-    userRole: { fontSize: '11px', color: '#2563EB', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' },
+    userRole: { fontSize: isMobile ? '13px' : '15px', color: '#2563EB', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '1px', marginTop: '4px' },
     infoGrid: { display: 'grid', gridTemplateColumns: isMobile ? '1fr' : 'repeat(2, 1fr)', gap: isMobile ? '12px' : '20px' },
     infoCard: { backgroundColor: '#F5F9FF', padding: isMobile ? '18px' : '25px', borderRadius: '20px', border: '1.5px solid #E0EFFF', display: 'flex', alignItems: 'center', gap: '15px' },
     iconCircle: { width: isMobile ? '40px' : '50px', height: isMobile ? '40px' : '50px', borderRadius: '14px', backgroundColor: '#FFFFFF', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563EB', boxShadow: '0 2px 8px rgba(37, 99, 235, 0.05)', flexShrink: 0 },
-    label: { fontSize: '10px', color: '#64748B', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' },
-    value: { fontSize: isMobile ? '14px' : '16px', color: '#0B1E3F', fontWeight: '1000', marginTop: '2px' },
+    label: { fontSize: isMobile ? '12px' : '14px', color: '#64748B', fontWeight: '800', textTransform: 'uppercase', letterSpacing: '0.5px' },
+    value: { fontSize: isMobile ? '16px' : '18px', color: '#0B1E3F', fontWeight: '1000', marginTop: '2px' },
     aboutSection: { marginTop: '25px', backgroundColor: '#f8fafc', padding: isMobile ? '20px' : '30px', borderRadius: '20px', border: '1px solid #f1f5f9' },
     logoutBtn: { width: isMobile ? '100%' : 'auto', padding: '15px 40px', borderRadius: '16px', border: '2px solid #EF4444', backgroundColor: 'white', color: '#EF4444', fontSize: '14px', fontWeight: '1000', cursor: 'pointer', display: 'block', margin: '40px auto 0', transition: 'all 0.2s' }
   };
@@ -234,7 +234,7 @@ export default function ProfileScreen({ onBack }) {
 
             {!isMobile && (
               <>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
                   <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Phone size={16} /></div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -247,12 +247,12 @@ export default function ProfileScreen({ onBack }) {
                         <Check size={16} color="#10b981" style={{ cursor: 'pointer' }} onClick={() => setIsEditingPhone(false)} />
                       </div>
                     ) : (
-                      <div style={{ ...styles.value, fontSize: '13px' }}>{phone}</div>
+                      <div style={{ ...styles.value, fontSize: isMobile ? '15px' : '17px' }}>{phone}</div>
                     )}
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginTop: '16px' }}>
                   <div style={{ ...styles.iconCircle, width: '36px', height: '36px', backgroundColor: '#F1F5F9', color: '#64748b' }}><Calendar size={16} /></div>
                   <div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -265,7 +265,7 @@ export default function ProfileScreen({ onBack }) {
                         <Check size={16} color="#10b981" style={{ cursor: 'pointer' }} onClick={() => setIsEditingDob(false)} />
                       </div>
                     ) : (
-                      <div style={{ ...styles.value, fontSize: '13px' }}>{dob}</div>
+                      <div style={{ ...styles.value, fontSize: isMobile ? '15px' : '17px' }}>{dob}</div>
                     )}
                   </div>
                 </div>
@@ -323,14 +323,14 @@ export default function ProfileScreen({ onBack }) {
               <div style={styles.iconCircle}><Mail size={18} /></div>
               <div>
                 <div style={styles.label}>Email Address</div>
-                <div style={{ ...styles.value, fontSize: isSmallMobile ? '12px' : '14px' }}>{user?.email || 'dinesh@navabharathtechnologies.com'}</div>
+                <div style={{ ...styles.value, fontSize: isSmallMobile ? '14px' : '16px' }}>{user?.email || 'dinesh@navabharathtechnologies.com'}</div>
               </div>
             </div>
           </div>
 
           <div style={styles.aboutSection}>
             <div style={{ ...styles.label, marginBottom: '10px', color: '#0B1E3F' }}>About Me</div>
-            <div style={{ fontSize: '12px', color: '#64748b', lineHeight: '1.6', fontWeight: '600' }}>
+            <div style={{ fontSize: isMobile ? '14px' : '16px', color: '#64748b', lineHeight: '1.6', fontWeight: '600' }}>
               {aboutMe}
             </div>
           </div>

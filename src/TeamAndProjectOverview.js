@@ -47,21 +47,21 @@ export default function TeamAndProjectOverview({ onBack }) {
   };
 
   const styles = {
-    container: { 
-      fontFamily: 'system-ui, sans-serif', 
+    container: {
+      fontFamily: 'system-ui, sans-serif',
       padding: isMobile ? '20px 15px' : '30px 40px',
       marginTop: isMobile ? '0' : '10px'
     },
     header: { display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '24px' },
-    grid: { 
-      display: 'grid', 
-      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))', 
-      gap: '24px' 
+    grid: {
+      display: 'grid',
+      gridTemplateColumns: isMobile ? '1fr' : 'repeat(auto-fill, minmax(320px, 1fr))',
+      gap: '24px'
     },
-    card: { 
-      backgroundColor: 'white', 
-      borderRadius: '24px', 
-      overflow: 'hidden', 
+    card: {
+      backgroundColor: 'white',
+      borderRadius: '24px',
+      overflow: 'hidden',
       boxShadow: '0 6px 24px rgba(49,90,158,0.10)',
       border: '2px solid #bfdbfe',
       display: 'flex',
@@ -276,8 +276,8 @@ export default function TeamAndProjectOverview({ onBack }) {
       <div style={styles.overlay} />
       <div style={styles.header}>
         {onBack && (
-          <div 
-            onClick={onBack} 
+          <div
+            onClick={onBack}
             style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #bfdbfe' }}
           >
             <ArrowLeft size={20} color="#0B1E3F" />
@@ -295,64 +295,64 @@ export default function TeamAndProjectOverview({ onBack }) {
           ) : teams.map(team => {
             const isZoomed = zoomedId === team.id;
             return (
-            <div 
-              key={team.id} 
-              style={{ ...styles.card, transition: 'all 0.3s ease', cursor: 'default', ...(isZoomed ? styles.zoomedCard : {}) }}
-              onClick={(e) => { e.stopPropagation(); setZoomedId(isZoomed ? null : team.id); }}
-            >
-              <div style={styles.cardHeader}>
-                <h3 style={styles.teamName}>{team.name}</h3>
-                <span style={styles.statusBadge}>{team.status || 'ACTIVE'}</span>
-              </div>
+              <div
+                key={team.id}
+                style={{ ...styles.card, transition: 'all 0.3s ease', cursor: 'default', ...(isZoomed ? styles.zoomedCard : {}) }}
+                onClick={(e) => { e.stopPropagation(); setZoomedId(isZoomed ? null : team.id); }}
+              >
+                <div style={styles.cardHeader}>
+                  <h3 style={styles.teamName}>{team.name}</h3>
+                  <span style={styles.statusBadge}>{team.status || 'ACTIVE'}</span>
+                </div>
 
-              <div style={styles.leaderStrip}>
-                <div style={styles.leaderInfo}>
-                  <div style={styles.leaderAvatar}>{(team.leader || team.lead || 'M')[0]}</div>
-                  <div style={styles.leaderText}>
-                    <span style={styles.leaderName}>{team.leader || team.lead || 'Manager'}</span>
-                    <span style={styles.leaderTitle}>Team Leader</span>
+                <div style={styles.leaderStrip}>
+                  <div style={styles.leaderInfo}>
+                    <div style={styles.leaderAvatar}>{(team.leader || team.lead || 'M')[0]}</div>
+                    <div style={styles.leaderText}>
+                      <span style={styles.leaderName}>{team.leader || team.lead || 'Manager'}</span>
+                      <span style={styles.leaderTitle}>Team Leader</span>
+                    </div>
+                  </div>
+                  <span style={styles.activeBadge}>Active</span>
+                </div>
+
+                <div style={styles.description}>{team.desc || team.description || `Active operations team for ${team.name}.`}</div>
+
+                <div style={styles.statsRow}>
+                  <div style={styles.statBox}>
+                    <span style={styles.statValue}>{team.members || 0}</span>
+                    <span style={styles.statLabel}>Members</span>
+                  </div>
+                  <div style={styles.statBox}>
+                    <span style={styles.statValue}>{team.tasks || 0}</span>
+                    <span style={styles.statLabel}>Tasks</span>
                   </div>
                 </div>
-                <span style={styles.activeBadge}>Active</span>
+
+                <div style={styles.progressSection}>
+                  <div style={styles.progressLabelRow}>
+                    <span style={styles.progressLabel}>Overall Progress</span>
+                    <span style={styles.progressValue}>{team.progress || 0}%</span>
+                  </div>
+                  <div style={styles.progressBar}>
+                    <div style={styles.progressFill(team.progress || 0)} />
+                  </div>
+                </div>
+
+                {isZoomed && (
+                  <div style={styles.rosterContainer}>
+                    <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Team Members</div>
+                    {getTeamMembers(team.leader || team.lead).map((memberName, idx) => (
+                      <div key={idx} style={styles.rosterMember}>
+                        <div style={styles.rosterAvatar}>{memberName.charAt(0)}</div>
+                        <div style={styles.rosterName}>{memberName}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+
               </div>
-
-              <div style={styles.description}>{team.desc || team.description || `Active operations team for ${team.name}.`}</div>
-
-              <div style={styles.statsRow}>
-                <div style={styles.statBox}>
-                  <span style={styles.statValue}>{team.members || 0}</span>
-                  <span style={styles.statLabel}>Members</span>
-                </div>
-                <div style={styles.statBox}>
-                  <span style={styles.statValue}>{team.tasks || 0}</span>
-                  <span style={styles.statLabel}>Tasks</span>
-                </div>
-              </div>
-
-              <div style={styles.progressSection}>
-                <div style={styles.progressLabelRow}>
-                  <span style={styles.progressLabel}>Overall Progress</span>
-                  <span style={styles.progressValue}>{team.progress || 0}%</span>
-                </div>
-                <div style={styles.progressBar}>
-                  <div style={styles.progressFill(team.progress || 0)} />
-                </div>
-              </div>
-
-              {isZoomed && (
-                <div style={styles.rosterContainer}>
-                  <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Team Members</div>
-                  {getTeamMembers(team.leader || team.lead).map((memberName, idx) => (
-                    <div key={idx} style={styles.rosterMember}>
-                      <div style={styles.rosterAvatar}>{memberName.charAt(0)}</div>
-                      <div style={styles.rosterName}>{memberName}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-
-            </div>
             );
           })}
         </div>

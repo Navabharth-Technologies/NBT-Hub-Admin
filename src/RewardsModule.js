@@ -178,25 +178,14 @@ export default function RewardsModule({ onBack }) {
                             </div>
                             <div>
                                 <h1 style={{ margin: 0, fontSize: winWidth < 768 ? '18px' : '24px', fontWeight: '950', color: '#0f172a', letterSpacing: '-0.5px' }}>Awards & Recognition</h1>
-                                <p style={{ margin: 0, fontSize: winWidth < 768 ? '10px' : '13px', color: '#94a3b8', fontWeight: '600' }}>Live achievements at NBT Hub</p>
                             </div>
                         </div>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px', width: winWidth < 768 ? '100%' : 'auto', justifyContent: 'flex-start', alignItems: 'center' }}>
                             <div style={{ display: 'flex', background: '#f1f5f9', padding: '3px', borderRadius: '10px', width: winWidth < 500 ? '100%' : 'auto', overflowX: 'auto' }}>
                                 <button 
                                     onClick={() => setView('feed')}
-                                    style={{ flex: 1, padding: winWidth < 480 ? '6px 10px' : '8px 16px', borderRadius: '8px', fontSize: winWidth < 480 ? '9px' : '11px', fontWeight: '800', border: 'none', background: view === 'feed' ? 'white' : 'transparent', color: view === 'feed' ? '#0f172a' : '#64748b', cursor: 'pointer', boxShadow: view === 'feed' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', whiteSpace: 'nowrap' }}>
+                                    style={{ flex: 1, padding: winWidth < 480 ? '6px 10px' : '8px 16px', borderRadius: '8px', fontSize: winWidth < 480 ? '9px' : '11px', fontWeight: '800', border: 'none', background: 'white', color: '#0f172a', cursor: 'pointer', boxShadow: '0 2px 4px rgba(0,0,0,0.05)', whiteSpace: 'nowrap' }}>
                                     Live Feed
-                                </button>
-                                <button 
-                                    onClick={() => setView('leaderboard')}
-                                    style={{ flex: 1, padding: winWidth < 480 ? '6px 10px' : '8px 16px', borderRadius: '8px', fontSize: winWidth < 480 ? '9px' : '11px', fontWeight: '800', border: 'none', background: view === 'leaderboard' ? 'white' : 'transparent', color: view === 'leaderboard' ? '#0f172a' : '#64748b', cursor: 'pointer', boxShadow: view === 'leaderboard' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', whiteSpace: 'nowrap' }}>
-                                    Leaderboard
-                                </button>
-                                <button 
-                                    onClick={() => setView('points')}
-                                    style={{ flex: 1, padding: winWidth < 480 ? '6px 10px' : '8px 16px', borderRadius: '8px', fontSize: winWidth < 480 ? '9px' : '11px', fontWeight: '800', border: 'none', background: view === 'points' ? 'white' : 'transparent', color: view === 'points' ? '#0f172a' : '#64748b', cursor: 'pointer', boxShadow: view === 'points' ? '0 2px 4px rgba(0,0,0,0.05)' : 'none', whiteSpace: 'nowrap' }}>
-                                    Reward Points
                                 </button>
                             </div>
 
@@ -265,10 +254,10 @@ export default function RewardsModule({ onBack }) {
                         <div style={{ background: '#f8fafc', borderRadius: '24px', padding: winWidth < 768 ? '15px' : '30px', border: '1.5px solid #f1f5f9' }}>
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                                 <h3 style={{ margin: 0, fontSize: '14px', fontWeight: '900', color: '#1e293b' }}>
-                                    {view === 'feed' ? 'Global Rewards' : view === 'leaderboard' ? 'Organization Ranking' : 'Standard Recognition Tiers'}
+                                    Global Rewards
                                 </h3>
                                 <div style={{ fontSize: '8px', fontWeight: '950', color: '#3863a8', background: '#e0f2fe', padding: '4px 10px', borderRadius: '8px', letterSpacing: '0.5px' }}>
-                                    {view === 'feed' ? `${rewards.length} ENTRIES` : view === 'leaderboard' ? 'ALL STAFF' : `${availableAwards.length} TIERS`}
+                                    {rewards.length} ENTRIES
                                 </div>
                             </div>
 
@@ -276,7 +265,7 @@ export default function RewardsModule({ onBack }) {
                                 <div style={{ textAlign: 'center', padding: '40px', color: '#94a3b8' }}>⚡ Syncing database...</div>
                             ) : (
                                 <>
-                                    {view === 'feed' ? (
+                                    {view === 'feed' && (
                                         <>
                                             {!selectedHistoryUser ? (
                                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -354,46 +343,6 @@ export default function RewardsModule({ onBack }) {
                                                 </div>
                                             )}
                                         </>
-                                    ) : view === 'leaderboard' ? (
-                                        <div style={{ maxHeight: '600px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '10px' }} className="custom-scroll">
-                                            {leaderboard.map((item, idx) => (
-                                                <div key={idx} style={{ 
-                                                    background: idx === 0 ? 'linear-gradient(135deg, #ffffff 0%, #fff7ed 100%)' : idx < 3 ? 'white' : '#f8fafc', 
-                                                    padding: '12px 16px', borderRadius: '16px', 
-                                                    border: idx === 0 ? '2px solid #facc15' : '1px solid #f1f5f9', 
-                                                    display: 'flex', justifyContent: 'space-between', alignItems: 'center'
-                                                }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: idx === 0 ? '#facc15' : idx === 1 ? '#cbd5e1' : idx === 2 ? '#ed8936' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', color: idx < 3 ? 'white' : '#94a3b8', fontWeight: '1000', fontSize: '12px' }}>
-                                                            #{idx+1}
-                                                        </div>
-                                                        <div>
-                                                            <div style={{ fontSize: '13px', fontWeight: '1000' }}>{item.name}</div>
-                                                            <div style={{ fontSize: '10px', color: '#94a3b8' }}>{item.role}</div>
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ textAlign: 'right' }}>
-                                                        <div style={{ fontSize: '14px', fontWeight: '1000' }}>{item.total_points}</div>
-                                                        <div style={{ fontSize: '8px', color: '#94a3b8' }}>REP</div>
-                                                    </div>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                                            {availableAwards.map((award, i) => (
-                                                <div key={award.id} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '16px', borderRadius: '16px', background: 'white', border: '1.5px solid #f1f5f9' }}>
-                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                        <div style={{ width: '40px', height: '40px', borderRadius: '12px', background: i < 3 ? '#fff7ed' : '#f0f9ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>{i < 3 ? <Trophy size={20} color="#f59e0b" /> : <Star size={20} color="#3b82f6" />}</div>
-                                                        <div>
-                                                            <div style={{ fontSize: '14px', fontWeight: '1000' }}>{award.title}</div>
-                                                            <div style={{ fontSize: '10px', color: '#64748b' }}>{award.desc}</div>
-                                                        </div>
-                                                    </div>
-                                                    <div style={{ background: '#eff6ff', padding: '5px 12px', borderRadius: '8px', color: '#2563eb', fontWeight: '1000', fontSize: '12px' }}>{award.rep} R</div>
-                                                </div>
-                                            ))}
-                                        </div>
                                     )}
                                 </>
                             )}

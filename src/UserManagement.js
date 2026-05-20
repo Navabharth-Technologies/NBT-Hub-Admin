@@ -8,6 +8,8 @@ export default function UserManagement({ onBack }) {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUserId, setSelectedUserId] = useState(null);
+  const [selectedDepartment, setSelectedDepartment] = useState('All');
+  const [showDropdown, setShowDropdown] = useState(false);
 
   useEffect(() => {
     const fetchUsers = async () => {
@@ -49,10 +51,13 @@ export default function UserManagement({ onBack }) {
   const isMobile = winWidth < 768;
 
   const filteredUsers = users.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (selectedDepartment === 'All' || u.team === selectedDepartment) &&
+    (u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     u.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.team.toLowerCase().includes(searchTerm.toLowerCase())
+    u.team.toLowerCase().includes(searchTerm.toLowerCase()))
   );
+
+  const departments = ['All', ...new Set(users.map(u => u.team).filter(Boolean))];
 
   const styles = {
     container: { fontFamily: 'system-ui, -apple-system, sans-serif', padding: isMobile ? '20px' : '40px', backgroundColor: '#F8FAFC', minHeight: '100vh', boxSizing: 'border-box' },
@@ -159,7 +164,7 @@ export default function UserManagement({ onBack }) {
   };
 
   return (
-    <div style={styles.container} onClick={() => setSelectedUserId(null)}>
+    <div style={styles.container} onClick={() => { setSelectedUserId(null); setShowDropdown(false); }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
         {onBack && (
           <div 
@@ -188,7 +193,38 @@ export default function UserManagement({ onBack }) {
             onClick={(e) => e.stopPropagation()}
           />
         </div>
-        {!isMobile && <button style={styles.filterBtn} onClick={(e) => e.stopPropagation()}>Departments <ChevronRight size={14} /></button>}
+        {!isMobile && (
+          <div style={{ position: 'relative' }}>
+            <button 
+              style={styles.filterBtn} 
+              onClick={(e) => { e.stopPropagation(); setShowDropdown(!showDropdown); }}
+            >
+              {selectedDepartment === 'All' ? 'Departments' : selectedDepartment} <ChevronRight size={14} style={{ transform: showDropdown ? 'rotate(90deg)' : 'rotate(0deg)', transition: '0.2s' }} />
+            </button>
+            <AnimatePresence>
+              {showDropdown && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: 10 }}
+                  style={{ position: 'absolute', top: 'calc(100% + 10px)', right: 0, backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0', zIndex: 100, minWidth: '180px', overflow: 'hidden' }}
+                >
+                  {departments.map(dept => (
+                    <div 
+                      key={dept} 
+                      onClick={(e) => { e.stopPropagation(); setSelectedDepartment(dept); setShowDropdown(false); }}
+                      style={{ padding: '12px 20px', cursor: 'pointer', fontSize: '14px', fontWeight: selectedDepartment === dept ? '800' : '600', color: selectedDepartment === dept ? '#4338ca' : '#64748b', borderBottom: '1px solid #f1f5f9', backgroundColor: selectedDepartment === dept ? '#eff6ff' : 'white', transition: 'background-color 0.2s' }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#eff6ff'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = selectedDepartment === dept ? '#eff6ff' : 'white'}
+                    >
+                      {dept}
+                    </div>
+                  ))}
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
       </div>
 
       {loading ? (

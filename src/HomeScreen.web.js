@@ -36,7 +36,7 @@ export default function SuperAdminHomeWeb() {
 
   const [showAllHolidays, setShowAllHolidays] = useState(false);
   const [showAllBirthdays, setShowAllBirthdays] = useState(false);
-  
+
   // Real-time Thread Notifications
   const [showDock, setShowDock] = useState(true);
   const { unreadCount, clearNotifications } = useThread();
@@ -66,7 +66,7 @@ export default function SuperAdminHomeWeb() {
     if (container) {
       container.addEventListener('scroll', handleScroll, { passive: true });
     }
-    
+
     return () => {
       if (container) container.removeEventListener('scroll', handleScroll);
       if (scrollTimeout.current) clearTimeout(scrollTimeout.current);
@@ -103,12 +103,12 @@ export default function SuperAdminHomeWeb() {
   const isTablet = winWidth >= 768 && winWidth < 1024;
 
   const styles = {
-    layout: { 
+    layout: {
       height: '100dvh', // Dynamic Viewport Height
       maxHeight: '100dvh',
       width: '100%',
-      backgroundColor: '#f8fafc', 
-      fontFamily: 'system-ui, sans-serif', 
+      backgroundColor: '#f8fafc',
+      fontFamily: 'system-ui, sans-serif',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'hidden'
@@ -157,16 +157,16 @@ export default function SuperAdminHomeWeb() {
       padding: isMobile ? '0 12px' : '0 32px',
       marginBottom: isMobile ? '12px' : '32px'
     },
-    statCard: { 
-      backgroundColor: 'white', 
-      borderRadius: '16px', 
-      padding: isMobile ? '12px' : '16px', 
-      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      gap: isMobile ? '8px' : '16px', 
-      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
-      width: '100%', 
+    statCard: {
+      backgroundColor: 'white',
+      borderRadius: '16px',
+      padding: isMobile ? '12px' : '16px',
+      boxShadow: '0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.05)',
+      display: 'flex',
+      flexDirection: 'column',
+      gap: isMobile ? '8px' : '16px',
+      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+      width: '100%',
       boxSizing: 'border-box',
       border: '2px solid #bfdbfe'
     },
@@ -192,7 +192,7 @@ export default function SuperAdminHomeWeb() {
     },
     dockContainer: {
       pointerEvents: 'auto',
-      backgroundColor: 'rgba(167, 214, 218, 0.95)', 
+      backgroundColor: 'rgba(167, 214, 218, 0.95)',
       borderRadius: '40px',
       display: 'grid',
       gridTemplateColumns: 'repeat(6, 1fr)',
@@ -207,14 +207,14 @@ export default function SuperAdminHomeWeb() {
       width: isMobile ? 'min(90%, 380px)' : 'max-content',
       maxWidth: '1200px'
     },
-    dockItem: (isActive) => ({ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
+    dockItem: (isActive) => ({
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
       justifyContent: 'center',
-      cursor: 'pointer', 
-      color: isActive ? '#0B1E3F' : 'rgba(11, 30, 63, 0.6)', 
-      transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)', 
+      cursor: 'pointer',
+      color: isActive ? '#0B1E3F' : 'rgba(11, 30, 63, 0.6)',
+      transition: '0.3s cubic-bezier(0.4, 0, 0.2, 1)',
       flex: 1,
       padding: isMobile ? '5px 2px' : '6px 12px',
       borderRadius: '24px',
@@ -222,9 +222,9 @@ export default function SuperAdminHomeWeb() {
       margin: '0',
       minWidth: isMobile ? 0 : '85px'
     }),
-    dockText: { 
-      fontSize: isMobile ? '5.8px' : '8.5px', 
-      fontWeight: '900', 
+    dockText: {
+      fontSize: isMobile ? '5.8px' : '8.5px',
+      fontWeight: '900',
       fontFamily: "'Outfit', sans-serif",
       marginTop: '2px',
       letterSpacing: '0.1px',
@@ -301,10 +301,10 @@ export default function SuperAdminHomeWeb() {
         const bdays = await safeJson(bdayRes);
         if (bdays && Array.isArray(bdays)) {
           cal = [...cal, ...bdays.map(b => {
-          const d = new Date(b.date);
-          const formattedDate = `${currentYear}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-          return { name: b.name, date: formattedDate, type: 'birthday' };
-        })];
+            const d = new Date(b.date);
+            const formattedDate = `${currentYear}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+            return { name: b.name, date: formattedDate, type: 'birthday' };
+          })];
         }
       }
       setCalendarItems(cal.sort((a, b) => new Date(a.date) - new Date(b.date)));
@@ -319,7 +319,7 @@ export default function SuperAdminHomeWeb() {
         const mainTeams = Array.isArray(teamRaw) ? teamRaw : (teamRaw?.data || teamRaw?.teams || teamRaw?.projects || []);
         const extraCompleted = teamRaw?.completed_projects || teamRaw?.finished_projects || teamRaw?.completed || [];
         tData = [...mainTeams, ...(Array.isArray(extraCompleted) ? extraCompleted : [])];
-        
+
         // De-duplicate if necessary (by name or id)
         const uniqueTeams = [];
         const seen = new Set();
@@ -331,7 +331,7 @@ export default function SuperAdminHomeWeb() {
           }
         });
         tData = uniqueTeams;
-        
+
         setAllTeams(tData);
         setTeams(tData.slice(0, 3));
       }
@@ -339,17 +339,17 @@ export default function SuperAdminHomeWeb() {
       if (sugRes?.ok || sugAdminRes?.ok) {
         const d1 = sugRes?.ok ? await safeJson(sugRes) : [];
         const d2 = sugAdminRes?.ok ? await safeJson(sugAdminRes) : [];
-        
+
         const list1 = Array.isArray(d1) ? d1 : (d1?.data || d1?.suggestions || []);
         const list2 = Array.isArray(d2) ? d2 : (d2?.data || d2?.suggestions || []);
-        
+
         // Merge and de-duplicate
         const combined = [...list1];
         list2.forEach(item => {
           const isDup = combined.some(ex => (ex.suggestion || ex.content || ex.id) === (item.suggestion || item.content || item.id));
           if (!isDup) combined.push(item);
         });
-        
+
         sugData = combined;
         setSuggestions(combined.slice(0, 3));
       }
@@ -358,22 +358,22 @@ export default function SuperAdminHomeWeb() {
       const doneTeams = tData.filter(t => {
         const status = (t.status || t.state || t.project_status || '').toString().toUpperCase();
         const progress = parseFloat(t.progress || t.completion || t.percentage || t.percent || 0);
-        return status.includes('COMPLETED') || 
-               status.includes('FINISH') || 
-               status.includes('DONE') ||
-               status.includes('SUCCESS') ||
-               status.includes('ARCHIVE') ||
-               status === '2' || // Some APIs use 2 for completed
-               progress >= 100;
+        return status.includes('COMPLETED') ||
+          status.includes('FINISH') ||
+          status.includes('DONE') ||
+          status.includes('SUCCESS') ||
+          status.includes('ARCHIVE') ||
+          status === '2' || // Some APIs use 2 for completed
+          progress >= 100;
       });
 
       const runningTeams = tData.filter(t => {
         const status = (t.status || t.state || t.project_status || '').toString().toUpperCase();
         const progress = parseFloat(t.progress || t.completion || t.percentage || t.percent || 0);
         const isDone = doneTeams.some(dt => (dt.id === t.id && t.id) || (dt.name === t.name && t.name));
-        
+
         return !isDone && (
-          status.includes('ACTIVE') || 
+          status.includes('ACTIVE') ||
           status.includes('RUNNING') ||
           status.includes('IN PROGRESS') ||
           status.includes('PROCESS') ||
@@ -423,8 +423,8 @@ export default function SuperAdminHomeWeb() {
     <div style={{ display: 'flex', flexDirection: 'column', flex: 1, minHeight: '100%' }}>
 
       <div style={styles.gridCards}>
-        <div 
-          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'users' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+        <div
+          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'users' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }}
           onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('users'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -432,8 +432,8 @@ export default function SuperAdminHomeWeb() {
           <div style={styles.iconWrapper('#6366f1', '#e0e7ff')}><Users size={24} /></div>
           <div><div style={styles.statLabel}>Employees</div><div style={styles.statValue}>{stats.workforce || employees.length || 0}</div></div>
         </div>
-        <div 
-          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'teams' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+        <div
+          style={{ ...styles.statCard, cursor: 'default', border: activeTab === 'teams' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }}
           onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('teams'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -442,8 +442,8 @@ export default function SuperAdminHomeWeb() {
           <div><div style={styles.statLabel}>Total Teams</div><div style={styles.statValue}>{stats.teams || teams.length || 0}</div></div>
         </div>
 
-        <div 
-          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'running' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+        <div
+          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'running' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }}
           onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('running'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -451,8 +451,8 @@ export default function SuperAdminHomeWeb() {
           <div style={styles.iconWrapper('#3b82f6', '#dbeafe')}><Activity size={18} /></div>
           <div><div style={styles.statLabel}>Running</div><div style={styles.statValue}>{stats.running || 0}</div></div>
         </div>
-        <div 
-          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'completed' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }} 
+        <div
+          style={{ ...styles.statCard, cursor: 'pointer', border: activeTab === 'completed' ? '2px solid #a7d6da' : '2px solid #bfdbfe' }}
           onClick={(e) => { e.stopPropagation(); showDockImmediately(); setActiveTab('completed'); }}
           onMouseEnter={(e) => e.currentTarget.style.transform = 'scale(1.03)'}
           onMouseLeave={(e) => e.currentTarget.style.transform = 'scale(1)'}
@@ -464,7 +464,7 @@ export default function SuperAdminHomeWeb() {
 
       <div style={styles.mainGrid}>
         {/* Birthdays Panel */}
-        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
+        <div style={{ ...styles.panel, display: 'flex', flexDirection: 'column' }}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#E11D48' }}>
               <Gift size={isMobile ? 18 : 24} /> Birthdays
@@ -473,40 +473,40 @@ export default function SuperAdminHomeWeb() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
             {calendarItems.filter(item => item.type === 'birthday' && !isPassed(item.date)).length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No upcoming birthdays.</div>
+              <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No upcoming birthdays.</div>
             ) : calendarItems.filter(item => item.type === 'birthday' && !isPassed(item.date))
               .slice(0, showAllBirthdays ? 999 : 3).map((item, i) => {
-              return (
-                <div key={i} style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '15px', 
-                  padding: '16px 20px', 
-                  backgroundColor: '#FFF1F2', 
-                  borderRadius: '16px', 
-                }}>
-                  <div style={{ width: '32px', height: '32px', backgroundColor: '#E11D48', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, fontWeight: '900', fontSize: '12px' }}>
-                    {item.name[0]}
+                return (
+                  <div key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    padding: '16px 20px',
+                    backgroundColor: '#FFF1F2',
+                    borderRadius: '16px',
+                  }}>
+                    <div style={{ width: '32px', height: '32px', backgroundColor: '#E11D48', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0, fontWeight: '900', fontSize: '12px' }}>
+                      {item.name[0]}
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '12px', fontWeight: '1000', color: '#0B1E3F' }}>{item.name}</div>
+                      <div style={{ fontSize: '10px', color: '#E11D48', fontWeight: '800', marginTop: '1px' }}>{item.date}</div>
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: '1000', color: '#0B1E3F' }}>{item.name}</div>
-                    <div style={{ fontSize: '10px', color: '#E11D48', fontWeight: '800', marginTop: '1px' }}>{item.date}</div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab('birthdays')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FFE4E6'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFF1F2'; e.currentTarget.style.transform = 'translateY(0)'; }}
-            style={{ 
-              marginTop: '12px', width: '100%', padding: '10px', 
-              backgroundColor: '#FFF1F2', border: '1.5px solid #FDA4AF', 
-              borderRadius: '14px', color: '#E11D48', fontSize: '10px', 
-              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
-              cursor: 'pointer', transition: 'all 0.3s ease' 
+            style={{
+              marginTop: '12px', width: '100%', padding: '10px',
+              backgroundColor: '#FFF1F2', border: '1.5px solid #FDA4AF',
+              borderRadius: '14px', color: '#E11D48', fontSize: '10px',
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px',
+              cursor: 'pointer', transition: 'all 0.3s ease'
             }}
           >
             MORE CELEBRATIONS
@@ -514,7 +514,7 @@ export default function SuperAdminHomeWeb() {
         </div>
 
         {/* Holidays Panel */}
-        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
+        <div style={{ ...styles.panel, display: 'flex', flexDirection: 'column' }}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#D97706' }}>
               <Calendar size={isMobile ? 18 : 24} /> Holidays
@@ -523,41 +523,41 @@ export default function SuperAdminHomeWeb() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
             {calendarItems.filter(item => item.type === 'holiday' && !isPassed(item.date)).length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No upcoming holidays.</div>
+              <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No upcoming holidays.</div>
             ) : calendarItems.filter(item => item.type === 'holiday' && !isPassed(item.date))
               .slice(0, showAllHolidays ? 999 : 3).map((item, i) => {
-              const d = new Date(item.date);
-              return (
-                <div key={i} style={{ 
-                  display: 'flex', 
-                  alignItems: 'center', 
-                  gap: '15px', 
-                  padding: '16px 20px', 
-                  backgroundColor: '#FFFBEB', 
-                  borderRadius: '16px', 
-                }}>
-                  <div style={{ width: '32px', height: '32px', backgroundColor: '#D97706', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
-                    <Calendar size={14} />
+                const d = new Date(item.date);
+                return (
+                  <div key={i} style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    padding: '16px 20px',
+                    backgroundColor: '#FFFBEB',
+                    borderRadius: '16px',
+                  }}>
+                    <div style={{ width: '32px', height: '32px', backgroundColor: '#D97706', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
+                      <Calendar size={14} />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontSize: '12px', fontWeight: '1000', color: '#0B1E3F' }}>{item.name}</div>
+                      <div style={{ fontSize: '10px', color: '#D97706', fontWeight: '800', marginTop: '1px' }}>{d.getDate()} {d.toLocaleString('default', { month: 'short' })}</div>
+                    </div>
                   </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontSize: '12px', fontWeight: '1000', color: '#0B1E3F' }}>{item.name}</div>
-                    <div style={{ fontSize: '10px', color: '#D97706', fontWeight: '800', marginTop: '1px' }}>{d.getDate()} {d.toLocaleString('default', { month: 'short' })}</div>
-                  </div>
-                </div>
-              );
-            })}
+                );
+              })}
           </div>
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab('holidays')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FEF3C7'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FFFBEB'; e.currentTarget.style.transform = 'translateY(0)'; }}
-            style={{ 
-              marginTop: '12px', width: '100%', padding: '10px', 
-              backgroundColor: '#FFFBEB', border: '1.5px solid #FDE68A', 
-              borderRadius: '14px', color: '#D97706', fontSize: '10px', 
-              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
-              cursor: 'pointer', transition: 'all 0.3s ease' 
+            style={{
+              marginTop: '12px', width: '100%', padding: '10px',
+              backgroundColor: '#FFFBEB', border: '1.5px solid #FDE68A',
+              borderRadius: '14px', color: '#D97706', fontSize: '10px',
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px',
+              cursor: 'pointer', transition: 'all 0.3s ease'
             }}
           >
             MORE HOLIDAYS
@@ -569,7 +569,7 @@ export default function SuperAdminHomeWeb() {
 
       <div style={{ ...styles.mainGrid, marginTop: '24px', flex: 1 }}>
         {/* Analytics Panel */}
-        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
+        <div style={{ ...styles.panel, display: 'flex', flexDirection: 'column' }}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#10B981' }}>
               <BarChart2 size={isMobile ? 18 : 24} /> Platform Analytics
@@ -599,17 +599,17 @@ export default function SuperAdminHomeWeb() {
               </div>
             ))}
           </div>
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab('analytics')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#DCFCE7'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#F0FDF4'; e.currentTarget.style.transform = 'translateY(0)'; }}
-            style={{ 
-              marginTop: '12px', width: '100%', padding: '10px', 
-              backgroundColor: '#F0FDF4', border: '1.5px solid #BBF7D0', 
-              borderRadius: '14px', color: '#10B981', fontSize: '10px', 
-              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
-              cursor: 'pointer', transition: 'all 0.3s ease' 
+            style={{
+              marginTop: '12px', width: '100%', padding: '10px',
+              backgroundColor: '#F0FDF4', border: '1.5px solid #BBF7D0',
+              borderRadius: '14px', color: '#10B981', fontSize: '10px',
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px',
+              cursor: 'pointer', transition: 'all 0.3s ease'
             }}
           >
             MORE ANALYTICS
@@ -617,7 +617,7 @@ export default function SuperAdminHomeWeb() {
         </div>
 
         {/* Suggestions Panel */}
-        <div style={{...styles.panel, display: 'flex', flexDirection: 'column'}}>
+        <div style={{ ...styles.panel, display: 'flex', flexDirection: 'column' }}>
           <div style={styles.panelHeader}>
             <div style={{ ...styles.panelTitle, color: '#F59E0B' }}>
               <MessageSquare size={isMobile ? 18 : 24} /> Suggestions
@@ -626,7 +626,7 @@ export default function SuperAdminHomeWeb() {
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
             {suggestions.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No recent suggestions.</div>
+              <div style={{ textAlign: 'center', padding: '20px', color: '#94a3b8', fontSize: '12px' }}>No recent suggestions.</div>
             ) : suggestions.map((sug, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '15px', padding: '12px 16px', backgroundColor: '#FEF3C7', borderRadius: '16px' }}>
                 <div style={{ width: '32px', height: '32px', backgroundColor: '#F59E0B', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', flexShrink: 0 }}>
@@ -639,17 +639,17 @@ export default function SuperAdminHomeWeb() {
               </div>
             ))}
           </div>
-          <button 
+          <button
             type="button"
             onClick={() => setActiveTab('suggestions')}
             onMouseEnter={(e) => { e.currentTarget.style.backgroundColor = '#FDE68A'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
             onMouseLeave={(e) => { e.currentTarget.style.backgroundColor = '#FEF3C7'; e.currentTarget.style.transform = 'translateY(0)'; }}
-            style={{ 
-              marginTop: '12px', width: '100%', padding: '10px', 
-              backgroundColor: '#FEF3C7', border: '1.5px solid #FCD34D', 
-              borderRadius: '14px', color: '#F59E0B', fontSize: '10px', 
-              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px', 
-              cursor: 'pointer', transition: 'all 0.3s ease' 
+            style={{
+              marginTop: '12px', width: '100%', padding: '10px',
+              backgroundColor: '#FEF3C7', border: '1.5px solid #FCD34D',
+              borderRadius: '14px', color: '#F59E0B', fontSize: '10px',
+              fontWeight: '1000', textTransform: 'uppercase', letterSpacing: '1px',
+              cursor: 'pointer', transition: 'all 0.3s ease'
             }}
           >
             MORE SUGGESTIONS
@@ -687,7 +687,7 @@ export default function SuperAdminHomeWeb() {
       case 'birthdays': return <BirthdayScreen onBack={handleBack} />;
       case 'running':
         return (
-          <div 
+          <div
             style={{ padding: isMobile ? '15px' : '30px', minHeight: '100%' }}
             onClick={() => setSelectedCardId(null)}
           >
@@ -701,20 +701,20 @@ export default function SuperAdminHomeWeb() {
                   No running projects found at the moment.
                 </div>
               ) : runningProjects.map((p, i) => (
-                <motion.div 
-                  key={i} 
+                <motion.div
+                  key={i}
                   layout
                   onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === (p.name || p.team_name) ? null : (p.name || p.team_name)); }}
-                  animate={{ 
+                  animate={{
                     scale: selectedCardId === (p.name || p.team_name) ? 1.02 : 1,
                     zIndex: selectedCardId === (p.name || p.team_name) ? 50 : 1,
                     boxShadow: selectedCardId === (p.name || p.team_name) ? '0 25px 50px -12px rgba(0,0,0,0.15)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  style={{ 
-                    backgroundColor: 'white', 
-                    padding: isMobile ? '24px' : '32px', 
-                    borderRadius: '24px', 
+                  style={{
+                    backgroundColor: 'white',
+                    padding: isMobile ? '24px' : '32px',
+                    borderRadius: '24px',
                     border: '3px solid #bfdbfe',
                     cursor: 'pointer',
                     position: 'relative',
@@ -745,7 +745,7 @@ export default function SuperAdminHomeWeb() {
         );
       case 'completed':
         return (
-          <div 
+          <div
             style={{ padding: isMobile ? '15px' : '30px', minHeight: '100%' }}
             onClick={() => setSelectedCardId(null)}
           >
@@ -759,20 +759,20 @@ export default function SuperAdminHomeWeb() {
                   No completed projects found in history.
                 </div>
               ) : completedProjects.map((p, i) => (
-                <motion.div 
-                  key={i} 
+                <motion.div
+                  key={i}
                   layout
                   onClick={(e) => { e.stopPropagation(); showDockImmediately(); setSelectedCardId(selectedCardId === (p.name || p.team_name) ? null : (p.name || p.team_name)); }}
-                  animate={{ 
+                  animate={{
                     scale: selectedCardId === (p.name || p.team_name) ? 1.02 : 1,
                     zIndex: selectedCardId === (p.name || p.team_name) ? 50 : 1,
                     boxShadow: selectedCardId === (p.name || p.team_name) ? '0 25px 50px -12px rgba(0,0,0,0.15)' : '0 10px 15px -3px rgba(0,0,0,0.05)'
                   }}
                   transition={{ type: "spring", stiffness: 300, damping: 25 }}
-                  style={{ 
-                    backgroundColor: 'white', 
-                    padding: isMobile ? '24px' : '40px', 
-                    borderRadius: '32px', 
+                  style={{
+                    backgroundColor: 'white',
+                    padding: isMobile ? '24px' : '40px',
+                    borderRadius: '32px',
                     border: '4px solid #dcfce7',
                     cursor: 'pointer',
                     position: 'relative',
@@ -800,8 +800,8 @@ export default function SuperAdminHomeWeb() {
   return (
     <div style={styles.layout} onClick={hideDockTemporarily}>
       <header style={styles.topBar}>
-        <div 
-          style={{ ...styles.topBarLeft, cursor: 'pointer' }} 
+        <div
+          style={{ ...styles.topBarLeft, cursor: 'pointer' }}
           onClick={() => setActiveTab('dashboard')}
           title="Go to Dashboard"
         >
@@ -856,7 +856,7 @@ export default function SuperAdminHomeWeb() {
 
         <AnimatePresence>
           {showDock && (
-            <motion.footer 
+            <motion.footer
               style={styles.dockWrapper}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -872,7 +872,7 @@ export default function SuperAdminHomeWeb() {
                     <div key={item.id} style={styles.dockItem(isActive)} onClick={() => setActiveTab(item.id)}>
                       <div style={{ position: 'relative' }}>
                         <Icon size={isMobile ? 14 : 17} style={{ strokeWidth: '2.5px' }} />
-                        
+
                         {item.id === 'thread' && unreadCount > 0 && (
                           <div style={{
                             position: 'absolute',

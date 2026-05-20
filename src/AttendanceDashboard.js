@@ -5,7 +5,7 @@ import {
   UserCheck, FileText, LogOut, MapPin
 } from 'lucide-react';
 import { jsPDF } from 'jspdf';
-import 'jspdf-autotable';
+import autoTable from 'jspdf-autotable';
 import { useAuth } from './AuthContext';
 import { API_ENDPOINTS, BASE_URL } from './config';
 
@@ -18,6 +18,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
   const [loading, setLoading] = useState(true);
   const [showAll, setShowAll] = useState(false);
   const [showFilterMenu, setShowFilterMenu] = useState(false);
+  const [showExportMenu, setShowExportMenu] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState({
     start: `${new Date().getFullYear()}-01-01`,
@@ -257,7 +258,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
       tableRows.push(rowData);
     });
 
-    doc.autoTable({
+    autoTable(doc, {
       head: [tableColumn],
       body: tableRows,
       startY: 28,
@@ -266,6 +267,36 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
     });
 
     doc.save(`Attendance_Report_${dateRange.start}_to_${dateRange.end}.pdf`);
+    setShowExportMenu(false);
+  };
+
+  const exportToExcel = () => {
+    const tableColumn = ["Employee", "ID", "Date", "In Time", "Out Time", "Work Hrs", "Status"];
+    const tableRows = [];
+
+    filteredLogs.forEach(log => {
+      const status = (log.status || (log.in_time ? 'P' : 'A')).toUpperCase();
+      const rowData = [
+        `"${(log.EmployeeName || log.name || log.userName || '-').replace(/"/g, '""')}"`,
+        `"${(log.Empcode || log.userId || log.employee_id || '-').toString().replace(/"/g, '""')}"`,
+        `"${(log.punch_date || log.date || '-').replace(/"/g, '""')}"`,
+        `"${(log.in_time || log.punch_in || log.check_in || '--:--').replace(/"/g, '""')}"`,
+        `"${(log.out_time || log.punch_out || log.check_out || '--:--').replace(/"/g, '""')}"`,
+        `"${(log.work_hrs || log.work_time || log.work_hours || '00:00').replace(/"/g, '""')}"`,
+        `"${status.replace(/"/g, '""')}"`
+      ];
+      tableRows.push(rowData.join(','));
+    });
+
+    const csvContent = tableColumn.join(',') + '\n' + tableRows.join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = `Attendance_Report_${dateRange.start}_to_${dateRange.end}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setShowExportMenu(false);
   };
 
   const formatLongDate = (dateStr) => {
@@ -406,9 +437,21 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
               <span style={{ fontSize: '10px', fontWeight: '800', color: '#94A3B8' }}>TO</span>
               <input type="date" value={dateRange.end} onChange={e => setDateRange(p => ({ ...p, end: e.target.value }))} style={styles.dateInput} />
             </div>
-            <button onClick={exportToPDF} style={{ ...styles.exportBtn, backgroundColor: '#0F172A', padding: '0 20px' }}>
-              <Download size={16} /> Export
-            </button>
+            <div style={{ position: 'relative' }}>
+              <button onClick={() => setShowExportMenu(!showExportMenu)} style={{ ...styles.exportBtn, backgroundColor: '#0F172A', padding: '0 20px' }}>
+                <Download size={16} /> Export
+              </button>
+              {showExportMenu && (
+                <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: '8px', backgroundColor: 'white', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.1)', border: '1px solid #E2E8F0', padding: '8px', zIndex: 1000, width: '150px' }}>
+                  <div onClick={exportToExcel} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '700', color: '#0F172A', transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    Excel Sheet (CSV)
+                  </div>
+                  <div onClick={exportToPDF} style={{ padding: '10px 12px', cursor: 'pointer', borderRadius: '8px', fontSize: '13px', fontWeight: '700', color: '#0F172A', transition: 'background-color 0.2s' }} onMouseOver={e => e.currentTarget.style.backgroundColor = '#F1F5F9'} onMouseOut={e => e.currentTarget.style.backgroundColor = 'transparent'}>
+                    PDF Document
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
         </div>
 

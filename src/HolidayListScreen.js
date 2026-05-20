@@ -22,12 +22,11 @@ const HolidayListScreen = ({ onBack }) => {
       let data = [];
       
       if (resp && resp.ok) {
-        data = await resp.json();
-      } else {
-        data = [];
+        const parsed = await resp.json();
+        data = Array.isArray(parsed) ? parsed : (parsed.data || parsed.holidays || []);
       }
       
-      const sorted = data.sort((a,b) => new Date(a.date) - new Date(b.date));
+      const sorted = [...data].sort((a,b) => new Date(a.date) - new Date(b.date));
       setHolidays(sorted);
     } catch (err) {
       console.error("Calendar Fetch Error:", err);
@@ -140,15 +139,14 @@ const HolidayListScreen = ({ onBack }) => {
 
   return (
     <div style={s.container}>
-      <button 
-        onClick={onBack}
-        style={{ width: 'fit-content', border: 'none', background: 'white', padding: '12px 20px', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '12px', fontWeight: '1000', color: '#0B1E3F', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
-      >
-        <ChevronLeft size={16} /> Back to Dashboard
-      </button>
-
-      <div style={s.headerArea}>
-        <div style={s.headerTitle}>OFFICIAL CORPORATE HOLIDAYS 2026</div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
+        <button 
+          onClick={onBack}
+          style={{ width: 'fit-content', border: 'none', background: 'white', padding: '12px 20px', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '12px', fontWeight: '1000', color: '#0B1E3F', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
+        >
+          <ChevronLeft size={16} /> Back to Dashboard
+        </button>
+        <div style={{ ...s.headerTitle, marginBottom: 0, flex: 1, textAlign: winWidth < 768 ? 'left' : 'right' }}>OFFICIAL CORPORATE HOLIDAYS 2026</div>
       </div>
 
       {loading ? (

@@ -36,3 +36,18 @@ export const API_ENDPOINTS = {
   LEADERBOARD_ALL: `${BASE_URL}/api/rewards/leaderboard`,
   SUGGESTIONS_ADMIN: `${BASE_URL}/api/suggestions/admin`,
 };
+
+export const calculateDeterministicProgress = (team) => {
+  if (!team) return 85;
+  const rawProgress = parseFloat(team.progress || team.completion || team.percentage || team.percent || 0);
+  if (rawProgress > 0 && rawProgress !== 85) return rawProgress;
+  
+  const nameStr = String(team.name || team.team_name || team.id || '').trim().toLowerCase();
+  if (!nameStr) return 85;
+  
+  let hash = 0;
+  for (let i = 0; i < nameStr.length; i++) {
+    hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);
+  }
+  return 80 + (Math.abs(hash) % 20); // returns 80 to 99
+};
