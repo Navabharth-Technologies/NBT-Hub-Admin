@@ -132,11 +132,26 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
 
 
 
-      const calculateWorkHours = (inT, outT) => {
-        if (!inT || !outT || inT === '--:--' || outT === '--:--' || inT === '----' || outT === '----') return '00:00';
+      const calculateWorkHours = (inT, outT, dateStr) => {
+        if (!inT || inT === '--:--' || inT === '----') return '00:00';
+        
+        let outH, outM;
+        if (!outT || outT === '--:--' || outT === '----') {
+          const today = new Date();
+          const logDate = dateStr ? new Date(dateStr) : today;
+          
+          if (logDate.toDateString() === today.toDateString()) {
+            outH = today.getHours();
+            outM = today.getMinutes();
+          } else {
+            return '00:00';
+          }
+        } else {
+          [outH, outM] = outT.split(':').map(Number);
+        }
+
         try {
           const [inH, inM] = inT.split(':').map(Number);
-          const [outH, outM] = outT.split(':').map(Number);
           let diff = (outH * 60 + outM) - (inH * 60 + inM);
           if (diff < 0) diff += 1440; // Handle overnight shifts
           const h = Math.floor(diff / 60).toString().padStart(2, '0');
@@ -152,6 +167,11 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
         const userInfo = usersMap[uid] || {};
         const name = userInfo.name || userInfo.EmployeeName || userInfo.employee_name || log.name || log.user_name || `Employee ${uid}`;
         
+        let computedWorkHrs = log.work_time || log.work_hours || log.total_time || log.duration;
+        if (!computedWorkHrs || computedWorkHrs === '00:00' || computedWorkHrs === '0' || computedWorkHrs === '0:00') {
+          computedWorkHrs = calculateWorkHours(log.in_time || log.punch_in || log.check_in, log.out_time || log.punch_out || log.check_out, log.punch_date || log.date);
+        }
+
         // Exact DB Mapping from screenshot
         return {
           ...log,
@@ -160,7 +180,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
           punch_date: log.punch_date || log.date || '',
           in_time: log.in_time || log.punch_in || log.check_in || '--:--',
           out_time: log.out_time || log.punch_out || log.check_out || '--:--',
-          work_hrs: log.work_time || log.work_hours || log.total_time || log.duration || calculateWorkHours(log.in_time || log.punch_in, log.out_time || log.punch_out) || '00:00',
+          work_hrs: computedWorkHrs || '00:00',
           punch_in_location: log.punchin_location || log.punch_in_location || log.check_in_location || '',
           punch_out_location: log.punchout_location || log.punch_out_location || log.check_out_location || '',
           status: (log.status || (log.in_time && log.in_time !== '--:--' ? 'P' : 'A')).toUpperCase(),

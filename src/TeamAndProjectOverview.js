@@ -5,6 +5,7 @@ import { API_ENDPOINTS } from './config';
 export default function TeamAndProjectOverview({ onBack }) {
   const [teams, setTeams] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
   const [winWidth, setWinWidth] = useState(window.innerWidth);
   const [zoomedId, setZoomedId] = useState(null);
 
@@ -17,18 +18,50 @@ export default function TeamAndProjectOverview({ onBack }) {
 
   const fetchTeams = async () => {
     setLoading(true);
+    setError(null);
     try {
-      const token = localStorage.getItem('token');
-      const response = await fetch(API_ENDPOINTS.TEAMS, {
-        headers: { 'Authorization': token ? `Bearer ${token}` : '' }
-      });
-      const data = await response.json();
-      if (response.ok) {
-        const list = Array.isArray(data) ? data : (data.data || data.teams || []);
-        setTeams(list);
+      // Resolve token — same strategy used across the app
+      let token = null;
+      try {
+        const saved = localStorage.getItem('navAuthUser');
+        if (saved) token = JSON.parse(saved).token;
+      } catch (e) {}
+      if (!token) token = localStorage.getItem('token');
+      const cleanToken = String(token || '').trim();
+
+      if (!cleanToken || cleanToken === 'undefined' || cleanToken === 'null') {
+        throw new Error('No auth token found. Please re-login.');
       }
+
+      const headers = { 'Authorization': `Bearer ${cleanToken}` };
+
+      const response = await fetch(API_ENDPOINTS.TEAMS, {
+        method: 'GET',
+        headers
+      });
+
+      if (!response.ok) {
+        throw new Error(`API Error: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      let list = [];
+      if (Array.isArray(data)) {
+        list = data;
+      } else if (data && Array.isArray(data.data)) {
+        list = data.data;
+      } else if (data && Array.isArray(data.teams)) {
+        list = data.teams;
+      } else if (data && data.data && Array.isArray(data.data.teams)) {
+        list = data.data.teams;
+      } else if (data && typeof data === 'object') {
+        const found = Object.values(data).find(v => Array.isArray(v));
+        if (found) list = found;
+      }
+      setTeams(list);
     } catch (err) {
       console.error("Failed to fetch teams:", err);
+      setError(err.message || "Network error occurred while syncing teams.");
     } finally {
       setLoading(false);
     }
@@ -288,9 +321,21 @@ export default function TeamAndProjectOverview({ onBack }) {
 
       {loading ? (
         <div style={{ textAlign: 'center', padding: '100px', fontWeight: '800', color: '#64748B' }}>Syncing Teams...</div>
+      ) : error ? (
+        <div style={{ textAlign: 'center', padding: '60px 20px' }}>
+          <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+          <div style={{ fontSize: '16px', fontWeight: '900', color: '#ef4444', marginBottom: '8px' }}>Failed to Load Teams</div>
+          <div style={{ fontSize: '13px', color: '#64748B', fontWeight: '600', marginBottom: '24px', maxWidth: '400px', margin: '0 auto 24px' }}>{error}</div>
+          <button
+            onClick={fetchTeams}
+            style={{ padding: '12px 28px', backgroundColor: '#0B1E3F', color: 'white', border: 'none', borderRadius: '14px', fontWeight: '800', fontSize: '13px', cursor: 'pointer' }}
+          >
+            Retry
+          </button>
+        </div>
       ) : (
         <div style={styles.grid}>
-          {teams.length === 0 ? (
+          {!Array.isArray(teams) || teams.length === 0 ? (
             <div style={{ textAlign: 'center', padding: '40px', gridColumn: '1/-1', color: '#64748B', fontWeight: '800' }}>No teams found.</div>
           ) : teams.map(team => {
             const isZoomed = zoomedId === team.id;

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { API_ENDPOINTS } from './config';
 import { useAuth } from './AuthContext';
 
@@ -11,6 +11,7 @@ export const ThreadProvider = ({ children }) => {
   const [totalThreads, setTotalThreads] = useState(0);
   const [loading, setLoading] = useState(true);
   const [lastEventSum, setLastEventSum] = useState(0);
+  const mutationInFlight = useRef(false);
 
   const sanitizeId = (id) => String(id || '').split(':')[0];
 
@@ -26,6 +27,8 @@ export const ThreadProvider = ({ children }) => {
   }, [user]);
 
   const fetchThreads = async (uId, isPolling = false) => {
+    // Skip polling fetches while a like/comment/badge mutation is in progress
+    if (isPolling && mutationInFlight.current) return;
     try {
       const token = localStorage.getItem('token');
       const headers = { 'Accept': 'application/json' };
@@ -186,6 +189,7 @@ export const ThreadProvider = ({ children }) => {
   };
 
   const toggleReaction = async (threadId, userId, type = 'like') => {
+    mutationInFlight.current = true;
     setThreads(prev => prev.map(t => {
       if (t.id === threadId) {
         const reactions = { ...(t.reactions || {}) };
@@ -222,11 +226,19 @@ export const ThreadProvider = ({ children }) => {
         headers,
         body: JSON.stringify({ userId: Number(userId), user_id: Number(userId), reactionType: type, reaction_type: type })
       });
-      if (!res.ok) await fetchThreads(userId);
-    } catch { await fetchThreads(userId); }
+      // Wait a moment before syncing so the backend has time to persist
+      await new Promise(r => setTimeout(r, 1500));
+      await fetchThreads(userId);
+    } catch (err) {
+      console.error('toggleReaction error:', err);
+      // Don't revert optimistic update on error — keep the UI state
+    } finally {
+      mutationInFlight.current = false;
+    }
   };
 
   const toggleBadge = async (threadId, userId) => {
+    mutationInFlight.current = true;
     // Optimistic Update
     setThreads(prev => prev.map(t => {
       if (t.id === threadId) {
@@ -259,13 +271,17 @@ export const ThreadProvider = ({ children }) => {
           reaction_type: 'badge'
         })
       });
-      if (!res.ok) await fetchThreads(userId);
-    } catch {
+      await new Promise(r => setTimeout(r, 1500));
       await fetchThreads(userId);
+    } catch (err) {
+      console.error('toggleBadge error:', err);
+    } finally {
+      mutationInFlight.current = false;
     }
   };
 
   const addComment = async (threadId, userId, userName, content) => {
+    mutationInFlight.current = true;
     // 1. Optimistic Comment Object
     const newComment = {
       id: 'temp-' + Date.now(),
@@ -292,18 +308,19 @@ export const ThreadProvider = ({ children }) => {
       if (res.ok) {
         // Try to get the real comment from backend if possible
         const realComment = await res.json().catch(() => newComment);
-        await fetchThreads();
+        // Refresh threads keeping the user context so comment counts stay in sync
+        await fetchThreads(userId);
         return realComment;
       }
 
-      // Safety Fallback for Demo: If backend fails, return the optimistic comment anyway
-      if (res.status >= 400) {
-        return newComment;
-      }
-    } catch (err) {
+      // If backend rejects, still return optimistic comment so UI stays intact
       return newComment;
+    } catch (err) {
+      console.error('addComment error:', err);
+      return newComment;
+    } finally {
+      mutationInFlight.current = false;
     }
-    return newComment;
   };
 
   const fetchComments = async (threadId) => {
@@ -311,22 +328,23 @@ export const ThreadProvider = ({ children }) => {
       // 1. Try minimal fetch
       const url = API_ENDPOINTS.THREAD_COMMENTS(threadId);
       const res = await fetch(url);
-      if (res.ok) return await res.json();
+      if (res.ok) {
+        const data = await res.json();
+        return Array.isArray(data) ? data : (data.comments || data.data || []);
+      }
 
-      // 2. Try with query param only if the first attempt was NOT found (404)
+      // 2. Try with userId query param if the first attempt was NOT found (404)
       if (res.status === 404) {
         const sid = sanitizeId(user?.id);
         const urlWithId = `${url}${sid ? `?userId=${sid}` : ''}`;
         const res2 = await fetch(urlWithId);
-        if (res2.ok) return await res2.json();
+        if (res2.ok) {
+          const data2 = await res2.json();
+          return Array.isArray(data2) ? data2 : (data2.comments || data2.data || []);
+        }
       }
 
-      // 3. Demo Safety Fallback: Provide mock data if backend crashes (500)
-      console.warn(`[Demo Mode] Providing mock data for thread ${threadId} due to server error.`);
-      return [
-        { id: 'mock-' + Date.now(), userName: user?.name || "Team Member", content: "Great update! Looking forward to it.", createdAt: new Date().toISOString() },
-        { id: 'mock-' + (Date.now() + 1), userName: "Management", content: "Good progress. Let's discuss this in the sync.", createdAt: new Date().toISOString() }
-      ];
+      return [];
     } catch (e) {
       return [];
     }

@@ -115,13 +115,17 @@ export default function ThreadScreen() {
     const [commentText, setCommentText] = useState('');
     const handleAddComment = async (id) => {
         if (!commentText.trim()) return;
-        const success = await addComment(id, user?.id, user?.name || 'User', commentText);
-        if (success) {
+        const newComment = await addComment(id, user?.id, user?.name || 'User', commentText);
+        if (newComment) {
             setCommentText('');
-            const comments = await fetchComments(id);
-            setPostComments(prev => ({ ...prev, [id]: comments }));
+            // Optimistically prepend the new comment to the existing list
+            setPostComments(prev => {
+                const existing = prev[id] || [];
+                return { ...prev, [id]: [newComment, ...existing] };
+            });
         }
     };
+
 
     const handleOpenComments = async (postId) => {
         if (activeCommentPost === postId) { setActiveCommentPost(null); return; }
