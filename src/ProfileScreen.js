@@ -179,7 +179,7 @@ export default function ProfileScreen({ onBack }) {
   const isSmallMobile = winWidth < 480;
 
   const styles = {
-    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: isMobile ? '120px' : '160px', paddingTop: isMobile ? '15px' : '30px', fontFamily: "'Outfit', sans-serif" },
+    container: { minHeight: '100vh', backgroundColor: '#f8fafc', paddingBottom: isMobile ? '200px' : '260px', paddingTop: isMobile ? '30px' : '50px', fontFamily: "'Outfit', sans-serif" },
     profileWrapper: { maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '0 15px' : '0 20px' },
     banner: { height: isMobile ? '120px' : '160px', backgroundColor: '#0B1E3F', borderRadius: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' },
     bannerText: { color: '#FFFFFF', fontSize: isMobile ? '14px' : '18px', fontWeight: '800', letterSpacing: '0.5px', textAlign: 'center', zIndex: 1 },
@@ -307,14 +307,7 @@ export default function ProfileScreen({ onBack }) {
                 </div>
               </>
             )}
-            <div style={styles.infoCard}>
-              <div style={styles.iconCircle}><Users size={18} /></div>
-              <div>
-                <div style={styles.label}>Team</div>
-                <div style={styles.value}>{team}</div>
-              </div>
-            </div>
-            <div style={styles.infoCard}>
+            <div style={{ ...styles.infoCard, gridColumn: isMobile ? 'auto' : 'span 2' }}>
               <div style={styles.iconCircle}><Mail size={18} /></div>
               <div>
                 <div style={styles.label}>Email Address</div>
