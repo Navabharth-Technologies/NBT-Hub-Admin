@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { ArrowLeft } from 'lucide-react';
 import { useAuth } from './AuthContext';
 import { API_ENDPOINTS, BASE_URL } from './config';
 
@@ -6,6 +7,7 @@ export default function SuggestionDashboard({ onBack }) {
   const { user } = useAuth();
   const [submissions, setSubmissions] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState('');
 
   useEffect(() => {
     const fetchSuggestions = async () => {
@@ -56,14 +58,60 @@ export default function SuggestionDashboard({ onBack }) {
 
         console.log('Combined suggestions count:', combinedData.length);
 
-        const mapped = combinedData.map(s => ({
-          user: s.employee_name || s.user_name || s.user || 'Anonymous',
-          team: s.employee_id || s.department || s.team || 'N/A',
-          date: s.created_at ? new Date(s.created_at).toLocaleDateString() : (s.date || 'Today'),
-          content: s.suggestion || s.suggestion_text || s.message || s.content || 'No content provided.',
-          participation: s.requirement || s.status || s.participation || 'Active',
-          profile_pic: s.profile_pic || s.profile_picture || s.user_profile_pic || s.user_pic
-        }));
+        const mapped = combinedData.map(s => {
+          let rawDateStr = s.created_at || s.date || '';
+          let filterDate = '';
+          let displayDate = 'Today';
+          
+          if (rawDateStr) {
+             if (rawDateStr.includes('/')) {
+                const parts = rawDateStr.split('/');
+                if (parts.length >= 3) {
+                   let p1 = parts[0];
+                   let p2 = parts[1];
+                   let p3 = parts[2].substring(0, 4);
+                   let yyyy, mm, dd;
+                   
+                   if (p1.length === 4) {
+                       yyyy = p1; mm = p2.padStart(2, '0'); dd = p3.padStart(2, '0');
+                   } else if (p3.length === 4) {
+                       dd = p1.padStart(2, '0'); mm = p2.padStart(2, '0'); yyyy = p3;
+                   }
+                   
+                   if (yyyy && mm && dd) {
+                       filterDate = `${yyyy}-${mm}-${dd}`;
+                       displayDate = `${dd}/${mm}/${yyyy}`;
+                   }
+                }
+             }
+             
+             if (!filterDate) {
+                let dateObj = new Date(rawDateStr);
+                if (!isNaN(dateObj.getTime())) {
+                  const yyyy = dateObj.getFullYear();
+                  const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+                  const dd = String(dateObj.getDate()).padStart(2, '0');
+                  filterDate = `${yyyy}-${mm}-${dd}`;
+                  displayDate = `${dd}/${mm}/${yyyy}`;
+                }
+             }
+          }
+          
+          if (!filterDate) {
+             displayDate = rawDateStr || 'Today';
+             filterDate = rawDateStr;
+          }
+
+          return {
+            user: s.employee_name || s.user_name || s.user || 'Anonymous',
+            team: s.employee_id || s.department || s.team || 'N/A',
+            date: displayDate,
+            filterDate: filterDate,
+            content: s.suggestion || s.suggestion_text || s.message || s.content || 'No content provided.',
+            participation: s.requirement || s.status || s.participation || 'Active',
+            profile_pic: s.profile_pic || s.profile_picture || s.user_profile_pic || s.user_pic
+          };
+        });
         setSubmissions(mapped);
       } catch (err) {
         console.error('Suggestion fetch error:', err);
@@ -93,30 +141,31 @@ export default function SuggestionDashboard({ onBack }) {
     badge: { fontSize: isMobile ? '8px' : '10px', background: 'rgba(37, 99, 235, 0.1)', color: '#2563eb', padding: '4px 10px', borderRadius: '12px', fontWeight: '800' }
   };
 
+  const filteredSubmissions = selectedDate 
+    ? submissions.filter(s => s.filterDate === selectedDate)
+    : submissions;
+
   return (
     <div style={styles.container}>
         <header style={styles.header}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-            <button onClick={onBack} style={styles.btnOutline}>← Back</button>
+            <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
             <div>
-              <h1 style={styles.title}>Innovation Hub</h1>
-              <p style={styles.subtitle}>Collaborative space for internal suggestions & workflow improvements.</p>
+              <h1 style={styles.title}>Suggestions</h1>
             </div>
           </div>
           <div style={{ display: 'flex', gap: '15px', alignItems: 'center', width: isMobile ? '100%' : 'auto', justifyContent: isMobile ? 'space-between' : 'flex-end' }}>
-            <button onClick={() => window.location.reload()} style={styles.btnOutline}>🔄 Refresh</button>
-            <div style={{ textAlign: 'right' }}>
-              <div style={{ fontSize: isMobile ? '16px' : '20px', fontWeight: '900', color: '#2563eb' }}>84%</div>
-              <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 'bold' }}>PARTICIPATION RATE</div>
-            </div>
+            <input 
+              type="date" 
+              value={selectedDate} 
+              onChange={(e) => setSelectedDate(e.target.value)} 
+              style={styles.btnOutline} 
+            />
           </div>
         </header>
 
         <section>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <h2 style={{ fontSize: '18px', fontWeight: '800', color: '#1e293b' }}>Recent Submissions</h2>
-            <span style={{ fontSize: '12px', color: '#64748b' }}>{submissions.length} Total Submissions</span>
-          </div>
+
           
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             {loading ? (
@@ -124,14 +173,14 @@ export default function SuggestionDashboard({ onBack }) {
                 <p style={{ fontWeight: '800', fontSize: '16px', marginBottom: '8px' }}>Syncing with Database...</p>
                 <p style={{ fontSize: '12px' }}>This may take a moment depending on network speed.</p>
               </div>
-            ) : submissions.length === 0 ? (
+            ) : filteredSubmissions.length === 0 ? (
               <div style={{ padding: '60px', textAlign: 'center', color: '#64748b', background: 'white', borderRadius: '20px', border: '1px dashed #cbd5e1' }}>
                 <div style={{ fontSize: '40px', marginBottom: '15px' }}>📭</div>
                 <p style={{ fontWeight: '800', fontSize: '18px', color: '#1e293b', marginBottom: '8px' }}>No submissions found.</p>
                 <p style={{ fontSize: '13px', maxWidth: '300px', margin: '0 auto' }}>If you expect to see suggestions here, please ensure you have the correct permissions.</p>
               </div>
             ) : (
-              submissions.map((s, i) => (
+              filteredSubmissions.map((s, i) => (
                 <div key={i} style={styles.card}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px', alignItems: 'center' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -153,19 +202,9 @@ export default function SuggestionDashboard({ onBack }) {
                     </div>
                     <span style={{ fontSize: '11px', color: '#64748b' }}>{s.date}</span>
                   </div>
-                  <p style={{ fontSize: '14px', color: '#1e293b', lineHeight: '1.6', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontStyle: 'italic' }}>
+                  <p style={{ fontSize: '14px', color: '#1e293b', lineHeight: '1.6', background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0', fontStyle: 'italic', marginBottom: 0 }}>
                     "{s.content}"
                   </p>
-                  <div style={{ marginTop: '20px', display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', gap: isMobile ? '16px' : '0' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <span style={{ fontSize: isMobile ? '10px' : '11px', fontWeight: 'bold', color: '#64748b' }}>Engagement:</span>
-                      <span style={styles.badge}>{s.participation}</span>
-                    </div>
-                    <div style={{ display: 'flex', gap: '10px', width: isMobile ? '100%' : 'auto' }}>
-                      <button style={{ ...styles.btnOutline, border: 'none', color: '#ef4444', flex: isMobile ? 1 : 'none', justifyContent: 'center' }}>Archive</button>
-                      <button style={{ ...styles.btnOutline, background: '#2563eb', color: 'white', border: 'none', flex: isMobile ? 1 : 'none', justifyContent: 'center' }}>Review Input</button>
-                    </div>
-                  </div>
                 </div>
               ))
             )}

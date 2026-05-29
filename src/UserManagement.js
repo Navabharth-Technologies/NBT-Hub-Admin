@@ -167,12 +167,7 @@ export default function UserManagement({ onBack }) {
     <div style={styles.container} onClick={() => { setSelectedUserId(null); setShowDropdown(false); }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '20px' }}>
         {onBack && (
-          <div 
-            onClick={onBack} 
-            style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #eef2f6' }}
-          >
-            <ArrowLeft size={20} color="#64748b" />
-          </div>
+          <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
         )}
         <div>
           <h1 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Employees</h1>

@@ -62,77 +62,70 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
   };
 
   const fetchData = async () => {
-    if (!user?.token) return;
-    try {
-      setLoading(true);
-      setError(null);
+  if (!user?.token) return;
+  try {
+    setLoading(true);
+    setError(null);
 
-      const storedUser = JSON.parse(localStorage.getItem('navAuthUser') || '{}');
-      const token = storedUser.token || localStorage.getItem('token') || user?.token;
-      const headers = { 
-        'Authorization': `Bearer ${token}`, 
-        'Accept': 'application/json',
-        'Content-Type': 'application/json'
-      };
+    const storedUser = JSON.parse(localStorage.getItem('navAuthUser') || '{}');
+    const token = storedUser.token || localStorage.getItem('token') || user?.token;
+    const headers = {
+      'Authorization': `Bearer ${token}`,
+      'Accept': 'application/json',
+      'Content-Type': 'application/json'
+    };
 
-      const BASE = BASE_URL;
+    const BASE = BASE_URL;
 
-      // 1. Fetch employee info to get the correct name/role
-      if (id) {
-        try {
-          const userRes = await fetch(`${BASE}/api/users`, { headers });
-          if (userRes.ok) {
-            const users = await userRes.json();
-            const validUsers = Array.isArray(users) ? users : (users?.data || []);
-            const found = validUsers.find(u => String(u.id) === String(id) || String(u.Empcode) === String(id) || String(u.employee_id) === String(id));
-            if (found) setEmployee(found);
-          }
-        } catch(e) { console.error('User fetch error:', e); }
-      }
-
-      // 2. Fetch all logs for the range
-      const res = await fetch(`${BASE}/api/attendance_logs?startDate=${startDate}&endDate=${endDate}&limit=5000`, { headers });
-      let allLogs = [];
-      if (res.ok) {
-        const result = await res.json();
-        allLogs = Array.isArray(result) ? result : (result.data || result.logs || result.attendance || []);
-      }
-
-      // 3. Filter for this specific employee
-      const uid = String(id || '').toLowerCase();
-      const myLogs = allLogs.filter(l => {
-        const logId = String(l.user_id || l.Empcode || l.userId || '').toLowerCase();
-        return logId === uid || logId.includes(uid);
-      });
-
-      // 4. Map and process strictly backend-sourced logs
-      const processed = myLogs.map(realLog => {
-        const inT = realLog.in_time || realLog.punch_in || '----';
-        const outT = realLog.out_time || realLog.punch_out || '----';
-        const dateStr = (realLog.punch_date || realLog.date || '').split('T')[0].split(' ')[0];
-        
-        return {
-          ...realLog,
-          date: dateStr,
-          employeeName: employee?.name || realLog.EmployeeName || employeeName || "---",
-          employeeId: id,
-          in_time: inT,
-          out_time: outT,
-          work_hrs: realLog.work_time || realLog.work_hours || realLog.total_time || realLog.duration || calculateWorkHours(inT, outT),
-          status: (realLog.status || (inT !== '----' ? 'P' : 'A')).toUpperCase(),
-          punchin_location: realLog.punchin_location || realLog.punch_in_location || '---',
-          punchout_location: realLog.punchout_location || realLog.punch_out_location || '---'
-        };
-      }).sort((a, b) => b.date.localeCompare(a.date));
-
-      setLogs(processed);
-    } catch (err) {
-      console.error(err);
-      setError("Synchronization failed. Please check network.");
-    } finally {
-      setLoading(false);
+    // 1. Fetch employee info
+    if (id) {
+      try {
+        const userRes = await fetch(`${BASE}/api/users`, { headers });
+        if (userRes.ok) {
+          const users = await userRes.json();
+          const validUsers = Array.isArray(users) ? users : (users?.data || []);
+          const found = validUsers.find(u => String(u.id) === String(id) || String(u.Empcode) === String(id) || String(u.employee_id) === String(id));
+          if (found) setEmployee(found);
+        }
+      } catch(e) { console.error('User fetch error:', e); }
     }
-  };
+
+    // 2. Fetch logs only for this employee
+    const logsRes = await fetch(`${BASE}/api/attendance_logs?userId=${id}&startDate=${startDate}&endDate=${endDate}&limit=5000`, { headers });
+    let employeeLogs = [];
+    if (logsRes.ok) {
+      const result = await logsRes.json();
+      employeeLogs = Array.isArray(result) ? result : (result.data || result.logs || result.attendance || []);
+    }
+
+    // 3. Process logs
+    const processed = employeeLogs.map(realLog => {
+      const inT = realLog.in_time || realLog.punch_in || '----';
+      const outT = realLog.out_time || realLog.punch_out || '----';
+      const dateStr = (realLog.punch_date || realLog.date || '').split('T')[0].split(' ')[0];
+      return {
+        ...realLog,
+        date: dateStr,
+        employeeName: employee?.name || realLog.EmployeeName || employeeName || "---",
+        employeeId: id,
+        in_time: inT,
+        out_time: outT,
+        work_hrs: realLog.work_time || realLog.work_hours || realLog.total_time || realLog.duration || calculateWorkHours(inT, outT),
+        status: (realLog.status || (inT !== '----' ? 'P' : 'A')).toUpperCase(),
+        punchin_location: realLog.punchin_location || realLog.punch_in_location || '---',
+        punchout_location: realLog.punchout_location || realLog.punch_out_location || '---'
+      };
+    }).sort((a, b) => b.date.localeCompare(a.date));
+
+    setLogs(processed);
+  } catch (err) {
+    console.error(err);
+    setError("Synchronization failed. Please check network.");
+  } finally {
+    setLoading(false);
+  }
+};
+
 
   const styles = {
     container: { backgroundColor: '#F0F4F8', minHeight: '100vh', fontFamily: 'system-ui, sans-serif' },
@@ -159,7 +152,7 @@ export default function EmployeeAttendanceDetail({ employeeId, employeeName, onB
       <main style={styles.main}>
         <div style={styles.header}>
           <div style={styles.profileSection}>
-            <button style={styles.backBtn} onClick={onBack}><ArrowLeft size={16} /></button>
+            <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
             <div>
               <h1 style={{ ...styles.empName, fontSize: '28px' }}>{id ? (employee?.name || 'Employee') : 'Workforce'} Dashboard</h1>
               <p style={{ ...styles.empMeta, fontSize: '13px' }}>

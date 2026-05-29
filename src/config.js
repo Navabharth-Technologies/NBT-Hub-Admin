@@ -34,16 +34,18 @@ export const API_ENDPOINTS = {
   CEO_LEAVES_GET: `${BASE_URL}/api/ceo/leaves`,
   LEAVE_STATUS_UPDATE: (id) => `${BASE_URL}/api/leaves/${id}/status`,
   SUGGESTIONS: `${BASE_URL}/api/suggestions`,
-  REWARDS_HISTORY: `${BASE_URL}/api/admin/rewards/history`,
+  REWARDS_HISTORY: `${BASE_URL}/api/admin/reward/history`,
   USER_REWARDS: (id) => `${BASE_URL}/api/rewards/user/${id}`,
   REWARDS: `${BASE_URL}/api/rewards`,
   REWARD_EDIT: (id) => `${BASE_URL}/api/rewards/${id}`,
   REWARD_DELETE: (id) => `${BASE_URL}/api/rewards/${id}`,
   REWARD_CATEGORIES: `${BASE_URL}/api/rewards/categories`,
   REWARDS_GIVE: `${BASE_URL}/api/rewards`,
-  REWARDS_LEADERBOARD: `${BASE_URL}/api/rewards/leaderboard`,
-  LEADERBOARD_ALL: `${BASE_URL}/api/rewards/leaderboard`,
+  REWARDS_LEADERBOARD: `${BASE_URL}/api/admin/rewards/leaderboard`,
+  LEADERBOARD_ALL: `${BASE_URL}/api/employees/leaderboard/all`,
   SUGGESTIONS_ADMIN: `${BASE_URL}/api/suggestions/admin`,
+  TASKS_RUNNING: `${BASE_URL}/api/admin/tasks/running`,
+  TASKS_COMPLETED: `${BASE_URL}/api/admin/tasks/completed`,
 };
 
 export const calculateDeterministicProgress = (team) => {

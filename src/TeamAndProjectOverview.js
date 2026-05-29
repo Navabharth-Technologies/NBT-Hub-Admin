@@ -69,14 +69,14 @@ export default function TeamAndProjectOverview({ onBack }) {
 
   const isMobile = winWidth < 768;
 
-  const getTeamMembers = (leaderName) => {
-    const name = String(leaderName || '').toLowerCase();
-    if (name.includes('santhosh')) return ['Tejaswini'];
-    if (name.includes('namith')) return ['Aishwarya', 'Rakshitha', 'Varun', 'Faraz'];
-    if (name.includes('rakesh')) return ['Shobha', 'Ashwini'];
-    if (name.includes('sahana')) return ['Imsha', 'Vishalakshi', 'Anoop'];
-    if (name.includes('deekshitha')) return ['Sonu', 'Akhil'];
-    return ['Team Member 1', 'Team Member 2'];
+  const getTeamMembers = (team) => {
+    if (team.membersList && Array.isArray(team.membersList)) {
+      const leaderName = String(team.leader || team.lead || '').toLowerCase().trim();
+      return team.membersList
+        .map(m => m.name || m.user_name || m.employee_name || '')
+        .filter(name => name && name.toLowerCase().trim() !== leaderName);
+    }
+    return [];
   };
 
   const styles = {
@@ -309,12 +309,7 @@ export default function TeamAndProjectOverview({ onBack }) {
       <div style={styles.overlay} />
       <div style={styles.header}>
         {onBack && (
-          <div
-            onClick={onBack}
-            style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #bfdbfe' }}
-          >
-            <ArrowLeft size={20} color="#0B1E3F" />
-          </div>
+          <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
         )}
         <h2 style={{ fontSize: isMobile ? '20px' : '24px', fontWeight: '900', color: '#0B1E3F', margin: 0 }}>Team & Project Overview</h2>
       </div>
@@ -365,7 +360,7 @@ export default function TeamAndProjectOverview({ onBack }) {
 
                 <div style={styles.statsRow}>
                   <div style={styles.statBox}>
-                    <span style={styles.statValue}>{team.members || 0}</span>
+                    <span style={styles.statValue}>{getTeamMembers(team).length}</span>
                     <span style={styles.statLabel}>Members</span>
                   </div>
                   <div style={styles.statBox}>
@@ -387,7 +382,7 @@ export default function TeamAndProjectOverview({ onBack }) {
                 {isZoomed && (
                   <div style={styles.rosterContainer}>
                     <div style={{ fontSize: '11px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Team Members</div>
-                    {getTeamMembers(team.leader || team.lead).map((memberName, idx) => (
+                    {getTeamMembers(team).map((memberName, idx) => (
                       <div key={idx} style={styles.rosterMember}>
                         <div style={styles.rosterAvatar}>{memberName.charAt(0)}</div>
                         <div style={styles.rosterName}>{memberName}</div>

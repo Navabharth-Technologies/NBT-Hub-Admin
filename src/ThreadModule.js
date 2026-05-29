@@ -90,8 +90,9 @@ export default function ThreadScreen() {
         if (!newPost.trim() && !mediaFile) return;
         setUploading(true);
         try {
+            const uid = user?.id || user?.empId || user?.userId || user?.employee_id;
             await addPost({
-                userId: user?.id,
+                userId: uid,
                 user: user?.name || 'User',
                 role: user?.role?.toUpperCase() || 'EMPLOYEE',
                 tagline: tagline,
@@ -109,13 +110,14 @@ export default function ThreadScreen() {
         }
     };
 
-    const onToggleLike = async (id, type = 'like') => await toggleReaction(id, user?.id, type);
-    const onToggleBadge = async (id) => await toggleBadge(id, user?.id);
+    const getCurrentUserId = () => user?.id || user?.empId || user?.userId || user?.employee_id;
+    const onToggleLike = async (id, type = 'like') => await toggleReaction(id, getCurrentUserId(), type);
+    const onToggleBadge = async (id) => await toggleBadge(id, getCurrentUserId());
 
     const [commentText, setCommentText] = useState('');
     const handleAddComment = async (id) => {
         if (!commentText.trim()) return;
-        const newComment = await addComment(id, user?.id, user?.name || 'User', commentText);
+        const newComment = await addComment(id, getCurrentUserId(), user?.name || 'User', commentText);
         if (newComment) {
             setCommentText('');
             // Optimistically prepend the new comment to the existing list

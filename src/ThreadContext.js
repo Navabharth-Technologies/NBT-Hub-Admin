@@ -58,12 +58,32 @@ export const ThreadProvider = ({ children }) => {
 
       // Standardized Normalization Layer: Absolute isolation of endorsements from emotional reactions
       const normalized = rawThreads.map(t => {
-        const reactions = t.reactions || {};
-        const userReactions = t.user_reactions || t.userReactions || {};
+        const rawReactions = t.reactions || {};
+        const rawUserReactions = t.user_reactions || t.userReactions || {};
+
+        const nameToEmoji = {
+          'heart': '❤️', 'thumbsup': '👍', 'cake': '🎂', 'fire': '🔥', 'clap': '👏',
+          'thumbs_up': '👍', 'heart_eyes': '😍', 'laughing': '😂', 'shocked': '😮'
+        };
+
+        const reactions = {};
+        const userReactions = {};
+
+        Object.entries(rawReactions).forEach(([key, val]) => {
+          const emojiKey = nameToEmoji[key.toLowerCase()] || key;
+          reactions[emojiKey] = (reactions[emojiKey] || 0) + val;
+        });
+
+        Object.entries(rawUserReactions).forEach(([key, val]) => {
+          const emojiKey = nameToEmoji[key.toLowerCase()] || key;
+          if (val === true || val === 1 || val === '1') {
+            userReactions[emojiKey] = true;
+          }
+        });
 
         // Absolute Decoupling: Prioritize 'like' key from reactions object for official endorsements
-        const officialLikeCount = reactions['like'] !== undefined ? reactions['like'] : (t.like_count !== undefined ? t.like_count : (t.likeCount || 0));
-        const officialUserLiked = userReactions['like'] === true || (t.user_has_liked !== undefined ? t.user_has_liked : (t.userHasLiked || false));
+        const officialLikeCount = rawReactions['like'] !== undefined ? rawReactions['like'] : (t.like_count !== undefined ? t.like_count : (t.likeCount || 0));
+        const officialUserLiked = rawUserReactions['like'] === true || (t.user_has_liked !== undefined ? t.user_has_liked : (t.userHasLiked || false));
 
         return {
           ...t,
@@ -221,10 +241,16 @@ export const ThreadProvider = ({ children }) => {
         headers['Authorization'] = `Bearer ${token.trim()}`;
       }
 
+      const emojiToName = { '❤️': 'heart', '👍': 'thumbsup', '🎂': 'cake', '🔥': 'fire', '👏': 'clap', '😂': 'laughing', '😮': 'shocked' };
+      const apiType = emojiToName[type] || type;
+
+      const numId = Number(userId);
+      const safeId = isNaN(numId) ? userId : numId;
+
       const res = await fetch(API_ENDPOINTS.THREAD_REACT(threadId), {
         method: 'POST',
         headers,
-        body: JSON.stringify({ userId: Number(userId), user_id: Number(userId), reactionType: type, reaction_type: type })
+        body: JSON.stringify({ userId: safeId, user_id: safeId, reactionType: apiType, reaction_type: apiType })
       });
       // Wait a moment before syncing so the backend has time to persist
       await new Promise(r => setTimeout(r, 1500));
@@ -261,12 +287,15 @@ export const ThreadProvider = ({ children }) => {
         headers['Authorization'] = `Bearer ${token.trim()}`;
       }
 
+      const numId = Number(userId);
+      const safeId = isNaN(numId) ? userId : numId;
+
       const res = await fetch(API_ENDPOINTS.THREAD_REACT(threadId), {
         method: 'POST',
         headers,
         body: JSON.stringify({
-          userId: Number(userId),
-          user_id: Number(userId),
+          userId: safeId,
+          user_id: safeId,
           reactionType: 'badge',
           reaction_type: 'badge'
         })
@@ -283,10 +312,13 @@ export const ThreadProvider = ({ children }) => {
   const addComment = async (threadId, userId, userName, content) => {
     mutationInFlight.current = true;
     // 1. Optimistic Comment Object
+    const numId = Number(userId);
+    const safeId = isNaN(numId) ? userId : numId;
+
     const newComment = {
       id: 'temp-' + Date.now(),
-      userId: Number(userId),
-      user_id: Number(userId),
+      userId: safeId,
+      user_id: safeId,
       userName,
       content,
       createdAt: new Date().toISOString()
@@ -302,7 +334,7 @@ export const ThreadProvider = ({ children }) => {
       const res = await fetch(API_ENDPOINTS.THREAD_COMMENT(threadId), {
         method: 'POST',
         headers,
-        body: JSON.stringify({ userId: Number(userId), user_id: Number(userId), userName, content })
+        body: JSON.stringify({ userId: safeId, user_id: safeId, userName, content })
       });
 
       if (res.ok) {
@@ -327,7 +359,8 @@ export const ThreadProvider = ({ children }) => {
     try {
       // 1. Try minimal fetch
       const url = API_ENDPOINTS.THREAD_COMMENTS(threadId);
-      const res = await fetch(url);
+      const finalUrl = url + (url.includes('?') ? '&' : '?') + `_t=${Date.now()}`;
+      const res = await fetch(finalUrl, { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         return Array.isArray(data) ? data : (data.comments || data.data || []);
@@ -337,7 +370,8 @@ export const ThreadProvider = ({ children }) => {
       if (res.status === 404) {
         const sid = sanitizeId(user?.id);
         const urlWithId = `${url}${sid ? `?userId=${sid}` : ''}`;
-        const res2 = await fetch(urlWithId);
+        const finalUrl2 = urlWithId + (urlWithId.includes('?') ? '&' : '?') + `_t=${Date.now()}`;
+        const res2 = await fetch(finalUrl2, { cache: 'no-store' });
         if (res2.ok) {
           const data2 = await res2.json();
           return Array.isArray(data2) ? data2 : (data2.comments || data2.data || []);

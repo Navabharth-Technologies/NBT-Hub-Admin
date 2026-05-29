@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, Calendar as CalendarIcon, RefreshCcw, CheckCircle2, Clock } from 'lucide-react';
+import { ChevronLeft, Calendar as CalendarIcon, RefreshCcw, CheckCircle2, Clock, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { API_ENDPOINTS } from './config';
 
@@ -140,12 +140,7 @@ const HolidayListScreen = ({ onBack }) => {
   return (
     <div style={s.container}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '40px', flexWrap: 'wrap', gap: '20px' }}>
-        <button 
-          onClick={onBack}
-          style={{ width: 'fit-content', border: 'none', background: 'white', padding: '12px 20px', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '12px', fontWeight: '1000', color: '#0B1E3F', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
-        >
-          <ChevronLeft size={16} /> Back to Dashboard
-        </button>
+        <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
         <div style={{ ...s.headerTitle, marginBottom: 0, flex: 1, textAlign: winWidth < 768 ? 'left' : 'right' }}>OFFICIAL CORPORATE HOLIDAYS 2026</div>
       </div>
 

@@ -31,12 +31,7 @@ export default function CourseManagement({ onBack }) {
       <div style={styles.panel}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '24px' }}>
           {onBack && (
-            <div 
-              onClick={onBack} 
-              style={{ cursor: 'pointer', backgroundColor: '#f1f5f9', padding: '8px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            >
-              <ArrowLeft size={20} color="#1e293b" />
-            </div>
+            <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
           )}
           <h2 style={{ ...styles.header, marginBottom: 0 }}>Course Management & Compliance</h2>
         </div>

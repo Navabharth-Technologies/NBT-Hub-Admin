@@ -14,7 +14,8 @@ export default function LeaveManagement({ onBack }) {
   const [selectedLeave, setSelectedLeave] = useState(null);
   const [adminRemarks, setAdminRemarks] = useState('');
   const [winWidth, setWinWidth] = useState(window.innerWidth);
-  const [filterDate, setFilterDate] = useState(new Date().toISOString().split('T')[0]);
+  const [filterDate, setFilterDate] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('Full Year');
   const isMobile = winWidth < 768;
 
   useEffect(() => {
@@ -39,9 +40,8 @@ export default function LeaveManagement({ onBack }) {
         'Authorization': authHeader
       };
 
-      const rawUid = user?.id || user?.employee_id || user?.userId || '20250';
-      const uid = '20250'; // Force Superadmin ID for administrative oversight
-      console.log(`[Leave] Syncing for UID: ${uid} (Forced)`);
+      const rawUid = user?.id || user?.employee_id || user?.userId || '';
+      console.log(`[Leave] Syncing for UID: ${rawUid}`);
 
       // Remove forbidden endpoint, try standard variations with administrative flags
       const endpoints = [
@@ -203,33 +203,34 @@ export default function LeaveManagement({ onBack }) {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
   };
 
+  // Removed monthFilteredRequests as we use filterDate directly in the tab
+
   const filteredRequests = requests.filter(req => {
     const name = (req.user_name || req.name || '').toLowerCase();
     const type = (req.leave_type || '').toLowerCase();
     const matchesSearch = name.includes(searchTerm.toLowerCase()) || type.includes(searchTerm.toLowerCase());
     
-    // Strict filter: Only HR and Project Manager applications are visible to Super Admin
+    const status = String(req.status || '').toUpperCase();
+    const isPending = status === 'PENDING' || status === 'REQUESTED';
+    const isApprovedOrRejected = status === 'APPROVED' || status === 'REJECTED';
+
     const roleStr = String(req.role || '').toUpperCase();
     const isManagement = roleStr === 'HR' || roleStr.includes('PROJECT MANAGER') || roleStr === 'PM' || roleStr.includes('HUMAN RESOURCE');
 
-    const status = String(req.status || '').toUpperCase();
-    const isPending = status === 'PENDING' || status === 'REQUESTED';
-
     if (activeTab === 'PENDING') {
-      // Show pending requests from Management for Super Admin oversight
       return matchesSearch && isPending && isManagement;
     }
     if (activeTab === 'HISTORY') {
-      // History should ONLY show completed (Approved/Rejected) requests for these specific roles
-      return matchesSearch && !isPending && isManagement;
+      return matchesSearch && isApprovedOrRejected && isManagement;
     }
     if (activeTab === 'EMPLOYEE_LEAVES') {
       const targetDate = filterDate;
       const start = req.start_date ? String(req.start_date).split('T')[0] : '';
       const end = req.end_date ? String(req.end_date).split('T')[0] : start;
-      return matchesSearch && start <= targetDate && end >= targetDate && isManagement;
+      const matchesDate = !targetDate || (start <= targetDate && end >= targetDate);
+      return matchesSearch && !isManagement && matchesDate;
     }
-    return matchesSearch && isManagement;
+    return matchesSearch;
   });
 
   const stats = {
@@ -247,7 +248,8 @@ export default function LeaveManagement({ onBack }) {
     }).length,
     total: requests.filter(r => {
       const roleStr = String(r.role || '').toUpperCase();
-      return roleStr === 'HR' || roleStr.includes('PROJECT MANAGER') || roleStr === 'PM' || roleStr.includes('HUMAN RESOURCE');
+      const isMgmt = roleStr === 'HR' || roleStr.includes('PROJECT MANAGER') || roleStr === 'PM' || roleStr.includes('HUMAN RESOURCE');
+      return isMgmt;
     }).length
   };
 
@@ -260,7 +262,7 @@ export default function LeaveManagement({ onBack }) {
       justifyContent: 'space-between', 
       marginBottom: '30px',
       gap: isMobile ? '10px' : '20px',
-      flexWrap: isMobile ? 'wrap' : 'nowrap'
+      flexWrap: 'nowrap'
     },
     backBtn: { 
       background: 'white', 
@@ -320,21 +322,32 @@ export default function LeaveManagement({ onBack }) {
     <div style={s.container}>
       <div style={s.header}>
         <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '8px' : '15px' }}>
-          <button style={s.backBtn} onClick={onBack}><ArrowLeft size={16} /> {!isMobile && 'Back'}</button>
+          <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
           <h1 style={{ margin: 0, fontSize: isMobile ? '18px' : '24px', fontWeight: '1000', color: '#0B1E3F' }}>Leave Management</h1>
         </div>
-        <button 
-          style={{ 
-            ...s.backBtn, 
-            background: '#0B1E3F', 
-            color: 'white', 
-            border: 'none', 
-            padding: isMobile ? '8px 10px' : '10px 15px'
-          }} 
-          onClick={fetchLeaves}
-        >
-          <RefreshCcw size={14} /> {isMobile ? 'Sync' : 'Sync Data'}
-        </button>
+        <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="date"
+              value={filterDate}
+              onChange={(e) => {
+                setFilterDate(e.target.value);
+                if (activeTab !== 'EMPLOYEE_LEAVES') setActiveTab('EMPLOYEE_LEAVES');
+              }}
+              style={{
+                background: 'white',
+                border: '1px solid #e2e8f0',
+                padding: isMobile ? '8px 12px' : '10px 15px',
+                borderRadius: '12px',
+                fontSize: isMobile ? '12px' : '13px',
+                fontWeight: '800',
+                color: '#0B1E3F',
+                cursor: 'pointer',
+                outline: 'none',
+              }}
+            />
+          </div>
+        </div>
       </div>
 
       <div style={s.statsGrid}>
@@ -355,6 +368,7 @@ export default function LeaveManagement({ onBack }) {
       <div style={s.tabs}>
         <div style={s.tab(activeTab === 'PENDING')} onClick={() => setActiveTab('PENDING')}>Pending Requests</div>
         <div style={s.tab(activeTab === 'HISTORY')} onClick={() => setActiveTab('HISTORY')}>Leave History</div>
+        <div style={s.tab(activeTab === 'EMPLOYEE_LEAVES')} onClick={() => setActiveTab('EMPLOYEE_LEAVES')}>Employee Leaves</div>
       </div>
 
       <div style={s.searchContainer}>
@@ -373,7 +387,7 @@ export default function LeaveManagement({ onBack }) {
         {loading ? (
           <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>Synchronizing Leave Database...</div>
         ) : filteredRequests.length === 0 ? (
-          <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>No leave requests found for HR/PM.</div>
+          <div style={{ padding: '100px', textAlign: 'center', color: '#64748b', fontWeight: '800' }}>No leave requests found.</div>
         ) : activeTab === 'HISTORY' ? (
           <div style={{ backgroundColor: 'white', borderRadius: '25px', overflowX: 'auto', border: '1.5px solid #f1f5f9', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.02)' }}>
             <table style={{ width: '100%', minWidth: isMobile ? '600px' : 'auto', borderCollapse: 'collapse', textAlign: 'left' }}>
@@ -438,7 +452,7 @@ export default function LeaveManagement({ onBack }) {
                 <div style={{ minWidth: 0 }}>
                   <h4 style={{ margin: 0, fontSize: isMobile ? '14px' : '16px', fontWeight: '1000', color: '#0B1E3F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{req.user_name || req.name}</h4>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginTop: '2px', flexWrap: 'wrap' }}>
-                    <p style={{ margin: 0, fontSize: isMobile ? '10px' : '12px', color: '#64748b', fontWeight: '700' }}>{isMobile ? req.leave_type?.split(' ')[0] : req.leave_type} • {req.no_of_days}d</p>
+                    <p style={{ margin: 0, fontSize: isMobile ? '10px' : '12px', color: '#64748b', fontWeight: '700' }}>{isMobile ? req.leave_type?.split(' ')[0] : req.leave_type} • {req.no_of_days || calculateDays(req.start_date, req.end_date)}d</p>
                     {['PROJECT MANAGER', 'HR', 'PM'].some(r => String(req.role || '').toUpperCase().includes(r)) && (
                       <span style={{ fontSize: '8px', fontWeight: '900', color: '#3863A8', backgroundColor: '#dbeafe', padding: '1px 4px', borderRadius: '4px', textTransform: 'uppercase' }}>
                         {isMobile ? (req.role?.includes('Manager') ? 'PM' : req.role) : req.role}
@@ -465,78 +479,78 @@ export default function LeaveManagement({ onBack }) {
         {selectedLeave && (
           <motion.div 
             initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,30,63,0.3)', backdropFilter: 'blur(10px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}
+            style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(11,30,63,0.3)', backdropFilter: 'blur(10px)', zIndex: 6000, display: 'flex', alignItems: 'flex-start', justifyContent: 'center', padding: '0 20px', overflowY: 'auto' }}
             onClick={() => setSelectedLeave(null)}
           >
             <motion.div 
               initial={{ scale: 0.95, y: 30, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.95, y: 30, opacity: 0 }}
-              style={{ backgroundColor: 'white', width: '100%', maxWidth: '850px', borderRadius: '40px', padding: isMobile ? '20px 20px 100px 20px' : '45px 45px 120px 45px', position: 'relative', boxShadow: '0 30px 70px rgba(0,0,0,0.3)', overflowY: 'auto', maxHeight: '95vh' }}
+              style={{ backgroundColor: 'white', width: '100%', maxWidth: '650px', borderRadius: '24px', padding: isMobile ? '30px 20px 40px 20px' : '45px 35px 50px 35px', position: 'relative', boxShadow: '0 30px 70px rgba(0,0,0,0.15)', margin: isMobile ? '20px auto' : '50px auto' }}
               onClick={e => e.stopPropagation()}
             >
               {/* Header section */}
-              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: isMobile ? '30px' : '40px', gap: '15px' }}>
-                <div style={{ display: 'flex', gap: isMobile ? '12px' : '20px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', justifyContent: 'space-between', alignItems: isMobile ? 'flex-start' : 'center', marginBottom: '20px', gap: '15px' }}>
+                <div style={{ display: 'flex', gap: isMobile ? '12px' : '15px', alignItems: 'center', flexShrink: 0, minWidth: '180px' }}>
                   <button onClick={() => setSelectedLeave(null)} style={{ border: 'none', background: '#f8fafc', width: '32px', height: '32px', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
                     <ArrowLeft size={14} />
                   </button>
-                  <div style={{ width: isMobile ? '50px' : '65px', height: isMobile ? '50px' : '65px', borderRadius: '50%', backgroundColor: '#0B1E3F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: isMobile ? '18px' : '24px', fontWeight: '1000', flexShrink: 0 }}>
+                  <div style={{ width: isMobile ? '45px' : '50px', height: isMobile ? '45px' : '50px', borderRadius: '50%', backgroundColor: '#0B1E3F', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontSize: isMobile ? '16px' : '20px', fontWeight: '1000', flexShrink: 0, marginRight: '8px' }}>
                     {(selectedLeave.user_name || selectedLeave.name || 'E').charAt(0)}
                   </div>
                   <div style={{ minWidth: 0 }}>
-                    <h2 style={{ margin: 0, fontSize: isMobile ? '16px' : '22px', fontWeight: '1000', color: '#0B1E3F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedLeave.user_name || selectedLeave.name}</h2>
-                    <div style={{ display: 'flex', gap: '10px', marginTop: '2px', flexWrap: 'wrap' }}>
-                      <span style={{ fontSize: isMobile ? '9px' : '11px', fontWeight: '900', color: '#94a3b8' }}>ID: {selectedLeave.user_id || selectedLeave.employee_id || '---'}</span>
-                      <span style={{ fontSize: isMobile ? '9px' : '11px', fontWeight: '900', color: '#3863A8' }}>{selectedLeave.role || 'Member'}</span>
+                    <h2 style={{ margin: 0, fontSize: isMobile ? '15px' : '18px', fontWeight: '1000', color: '#0B1E3F', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedLeave.user_name || selectedLeave.name}</h2>
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '2px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: isMobile ? '9px' : '11px', fontWeight: '800', color: '#94a3b8' }}>ID: {selectedLeave.user_id || selectedLeave.employee_id || '---'}</span>
+                      <span style={{ fontSize: isMobile ? '9px' : '11px', fontWeight: '800', color: '#3863A8' }}>{selectedLeave.role || 'Member'}</span>
                     </div>
                   </div>
                 </div>
-                <div style={{ textAlign: isMobile ? 'left' : 'right', width: isMobile ? '100%' : 'auto' }}>
-                  <p style={{ margin: '0 0 5px 0', fontSize: '9px', fontWeight: '1000', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Request Status</p>
-                  <div style={{ padding: isMobile ? '6px 15px' : '8px 25px', borderRadius: '10px', background: '#fff9e6', color: '#d97706', fontSize: isMobile ? '10px' : '12px', fontWeight: '1000', display: 'inline-block' }}>
+                  <div style={{ textAlign: isMobile ? 'left' : 'right', width: isMobile ? '100%' : 'auto', flex: 1, marginLeft: isMobile ? '0' : '20px' }}>
+                  <p style={{ margin: '0 0 3px 0', fontSize: '9px', fontWeight: '800', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Request Status</p>
+                  <div style={{ padding: isMobile ? '5px 12px' : '6px 18px', borderRadius: '8px', background: '#fff9e6', color: '#d97706', fontSize: isMobile ? '9px' : '11px', fontWeight: '1000', display: 'inline-block' }}>
                     {String(selectedLeave.status || 'PENDING').toUpperCase()}
                   </div>
                 </div>
               </div>
 
               {/* Two Column Section */}
-              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.2fr 1fr', gap: '30px', marginBottom: '35px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
                 {/* Left Card: Leave Details */}
-                <div style={{ backgroundColor: '#f8fafc', padding: '30px', borderRadius: '25px', border: '1px solid #f1f5f9' }}>
-                   <div style={{ marginBottom: '25px' }}>
-                     <p style={{ margin: '0 0 10px 0', fontSize: '10px', fontWeight: '1000', color: '#64748b', textTransform: 'uppercase' }}>Leave Details</p>
-                     <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '1000', color: '#0B1E3F' }}>{selectedLeave.leave_type || 'Casual Leave'}</h4>
-                     <p style={{ margin: '2px 0 0', fontSize: '10px', color: '#94a3b8', fontWeight: '800' }}>Category</p>
+                <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                   <div style={{ marginBottom: '15px' }}>
+                     <p style={{ margin: '0 0 6px 0', fontSize: '9px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Leave Details</p>
+                     <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '900', color: '#0B1E3F' }}>{selectedLeave.leave_type || 'Casual Leave'}</h4>
+                     <p style={{ margin: '2px 0 0', fontSize: '9px', color: '#94a3b8', fontWeight: '700' }}>Category</p>
                    </div>
                    
-                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '25px' }}>
+                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
                      <div>
-                       <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '1000', color: '#0B1E3F' }}>{selectedLeave.applied_on ? new Date(selectedLeave.applied_on).toLocaleString() : '---'}</h4>
-                       <p style={{ margin: '2px 0 0', fontSize: '10px', color: '#94a3b8', fontWeight: '800' }}>Applied On</p>
+                       <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '900', color: '#0B1E3F' }}>{selectedLeave.applied_on ? new Date(selectedLeave.applied_on).toLocaleDateString('en-GB') : '---'}</h4>
+                       <p style={{ margin: '2px 0 0', fontSize: '9px', color: '#94a3b8', fontWeight: '700' }}>Applied On</p>
                      </div>
                      <div style={{ textAlign: 'right' }}>
-                       <h4 style={{ margin: 0, fontSize: '15px', fontWeight: '1000', color: '#0B1E3F' }}>{selectedLeave.is_half_day ? 'Half Day' : `${selectedLeave.no_of_days || 1} Days`}</h4>
-                       <p style={{ margin: '2px 0 0', fontSize: '10px', color: '#94a3b8', fontWeight: '800' }}>Total Days</p>
+                       <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '900', color: '#0B1E3F' }}>{selectedLeave.is_half_day ? 'Half Day' : `${selectedLeave.no_of_days || 1} Days`}</h4>
+                       <p style={{ margin: '2px 0 0', fontSize: '9px', color: '#94a3b8', fontWeight: '700' }}>Total Days</p>
                      </div>
                    </div>
 
                    <div>
-                     <p style={{ margin: '0 0 10px 0', fontSize: '10px', fontWeight: '1000', color: '#64748b', textTransform: 'uppercase' }}>Leave Duration</p>
-                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
-                       <div style={{ backgroundColor: '#e2e8f0', padding: '6px', borderRadius: '8px' }}><Calendar size={14} color="#0B1E3F" /></div>
-                       <span style={{ fontSize: '14px', fontWeight: '1000', color: '#0B1E3F' }}>
+                     <p style={{ margin: '0 0 6px 0', fontSize: '9px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Leave Duration</p>
+                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                       <div style={{ backgroundColor: '#e2e8f0', padding: '4px', borderRadius: '6px' }}><Calendar size={12} color="#0B1E3F" /></div>
+                       <span style={{ fontSize: '12px', fontWeight: '800', color: '#0B1E3F' }}>
                          {String(selectedLeave.start_date || '').split('T')[0]} to {String(selectedLeave.end_date || '').split('T')[0]}
                        </span>
                      </div>
                      {selectedLeave.is_half_day && (
                        <>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                           <Umbrella size={14} color="#f59e0b" />
-                           <span style={{ fontSize: '12px', fontWeight: '800', color: '#f59e0b' }}>Half Day Session</span>
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                           <Umbrella size={12} color="#f59e0b" />
+                           <span style={{ fontSize: '11px', fontWeight: '700', color: '#f59e0b' }}>Half Day Session</span>
                          </div>
-                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                           <Clock size={14} color="#3b82f6" />
-                           <span style={{ fontSize: '12px', fontWeight: '900', color: '#3b82f6', textTransform: 'uppercase' }}>
-                             SESSION: {selectedLeave.half_day_slot || 'First Half (9:30 - 2:30)'}
+                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                           <Clock size={12} color="#3b82f6" />
+                           <span style={{ fontSize: '11px', fontWeight: '800', color: '#3b82f6', textTransform: 'uppercase' }}>
+                             SESSION: {selectedLeave.half_day_slot || 'First Half'}
                            </span>
                          </div>
                        </>
@@ -545,43 +559,29 @@ export default function LeaveManagement({ onBack }) {
                 </div>
 
                 {/* Right Card: Official Verification */}
-                <div style={{ backgroundColor: '#f8fafc', padding: '30px', borderRadius: '25px', border: '1px solid #f1f5f9' }}>
-                   <p style={{ margin: '0 0 25px 0', fontSize: '10px', fontWeight: '1000', color: '#64748b', textTransform: 'uppercase' }}>Official Verification</p>
+                <div style={{ backgroundColor: '#f8fafc', padding: '20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                   <p style={{ margin: '0 0 15px 0', fontSize: '9px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Official Verification</p>
                    
-                   <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                   <div style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
                      {(() => {
-                       const roleStr = String(selectedLeave.role || '').toUpperCase();
-                       const isManagerOrHR = ['PROJECT MANAGER', 'PM', 'MANAGER', 'HR', 'HUMAN RESOURCES', 'LEAD', 'HEAD'].some(r => roleStr.includes(r));
-                       
-                       // Find names dynamically
-                       const applicant = allUsers.find(u => String(u.id) === String(selectedLeave.user_id || selectedLeave.employee_id));
-                       const rmName = allUsers.find(u => String(u.id) === String(applicant?.manager_id))?.name || 'Super Admin';
-                       const hrName = allUsers.find(u => String(u.role).toLowerCase().includes('hr'))?.name || 'Sinchana H S';
-                       const pmName = 'Anish V N';
-
-                       const verificationSteps = isManagerOrHR ? [
-                         { label: 'RM & PM Approval', by: rmName, status: selectedLeave.status || selectedLeave.pm_status || selectedLeave.rm_status },
-                         { label: 'HR Approval', by: hrName, status: selectedLeave.hr_status }
-                       ] : [
-                         { label: 'Team Leader Approval', by: rmName, status: selectedLeave.rm_status },
-                         { label: 'HR Approval', by: hrName, status: selectedLeave.hr_status },
-                         { label: 'PM Approval', by: pmName, status: selectedLeave.pm_status }
+                       const verificationSteps = [
+                         { label: 'RM Approval', by: 'Dinesh sir', status: selectedLeave.status || 'PENDING' }
                        ];
 
                        return verificationSteps.map((v, i) => (
                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                            <div>
-                              <h4 style={{ margin: 0, fontSize: '14px', fontWeight: '1000', color: '#0B1E3F' }}>{v.label}</h4>
-                              <p style={{ margin: '2px 0 0', fontSize: '10px', color: '#64748b', fontWeight: '800' }}>By: {v.by}</p>
+                              <h4 style={{ margin: 0, fontSize: '13px', fontWeight: '900', color: '#0B1E3F' }}>{v.label}</h4>
+                              <p style={{ margin: '2px 0 0', fontSize: '9px', color: '#64748b', fontWeight: '700' }}>By: {v.by}</p>
                            </div>
                            <div style={{ 
-                             padding: '6px 18px', 
-                             borderRadius: '10px', 
+                             padding: '4px 12px', 
+                             borderRadius: '8px', 
                              backgroundColor: String(v.status || 'Pending').toUpperCase() === 'APPROVED' ? '#f0fdf4' : String(v.status || 'Pending').toUpperCase() === 'REJECTED' ? '#fee2e2' : '#fff9e6',
                              color: String(v.status || 'Pending').toUpperCase() === 'APPROVED' ? '#22c55e' : String(v.status || 'Pending').toUpperCase() === 'REJECTED' ? '#ef4444' : '#d97706',
-                             fontSize: '10px', 
-                             fontWeight: '1000',
-                             border: `1.5px solid ${String(v.status || 'Pending').toUpperCase() === 'APPROVED' ? '#22c55e' : String(v.status || 'Pending').toUpperCase() === 'REJECTED' ? '#ef4444' : '#ffeeba'}`
+                             fontSize: '9px', 
+                             fontWeight: '900',
+                             border: `1.2px solid ${String(v.status || 'Pending').toUpperCase() === 'APPROVED' ? '#22c55e' : String(v.status || 'Pending').toUpperCase() === 'REJECTED' ? '#ef4444' : '#ffeeba'}`
                            }}>
                              {String(v.status || 'Pending').toUpperCase()}
                            </div>
@@ -593,44 +593,63 @@ export default function LeaveManagement({ onBack }) {
               </div>
 
               {/* Reason for leave */}
-              <div style={{ marginBottom: '35px' }}>
-                 <p style={{ margin: '0 0 15px 0', fontSize: '11px', fontWeight: '1000', color: '#64748b', textTransform: 'uppercase' }}>Reason for leave</p>
-                 <div style={{ backgroundColor: '#f8fafc', padding: '25px', borderRadius: '20px', border: '1px solid #f1f5f9' }}>
-                    <p style={{ margin: 0, fontSize: '15px', fontWeight: '1000', color: '#0B1E3F' }}>
+              <div style={{ marginBottom: '20px' }}>
+                 <p style={{ margin: '0 0 10px 0', fontSize: '10px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Reason for leave</p>
+                 <div style={{ backgroundColor: '#f8fafc', padding: '15px 20px', borderRadius: '16px', border: '1px solid #f1f5f9' }}>
+                    <p style={{ margin: 0, fontSize: '14px', fontWeight: '800', color: '#0B1E3F' }}>
                       {selectedLeave.reason || selectedLeave.remark || 'No reason provided.'}
                     </p>
                  </div>
               </div>
 
               {/* Add Feedback */}
-              <div style={{ marginBottom: '40px' }}>
-                 <p style={{ margin: '0 0 15px 0', fontSize: '11px', fontWeight: '1000', color: '#64748b', textTransform: 'uppercase' }}>Add Feedback / Comment</p>
+              <div style={{ marginBottom: '20px' }}>
+                 <p style={{ margin: '0 0 10px 0', fontSize: '10px', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>Add Feedback / Comment</p>
                  <textarea 
                    placeholder="Enter your feedback here..."
                    value={adminRemarks}
                    onChange={(e) => setAdminRemarks(e.target.value)}
-                   style={{ width: '100%', padding: '20px', borderRadius: '20px', border: '1.5px solid #e2e8f0', minHeight: '100px', fontSize: '14px', fontWeight: '700', boxSizing: 'border-box' }}
+                   style={{ width: '100%', padding: '12px 16px', borderRadius: '12px', border: '1.5px solid #e2e8f0', minHeight: '70px', fontSize: '13px', fontWeight: '700', boxSizing: 'border-box', outline: 'none' }}
                  />
               </div>
 
-              {/* Action Buttons */}
-              {String(selectedLeave.status || '').toUpperCase() === 'PENDING' && 
-               ['PROJECT MANAGER', 'HR', 'PM', 'HUMAN RESOURCE'].some(r => String(selectedLeave.role || '').toUpperCase().includes(r)) && (
-                <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: '15px', width: '100%' }}>
-                  <button 
-                    onClick={() => handleAction(selectedLeave.id, 'Rejected', adminRemarks)}
-                    style={{ flex: 1, padding: isMobile ? '15px' : '20px', borderRadius: '18px', border: 'none', backgroundColor: '#fee2e2', color: '#ef4444', fontWeight: '1000', fontSize: isMobile ? '12px' : '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                  >
-                    <XCircle size={18} /> Reject Request
-                  </button>
-                  <button 
+              {/* Approve / Reject Buttons */}
+              {String(selectedLeave.status || '').toUpperCase() === 'PENDING' && (
+                <div style={{ display: 'flex', gap: '12px', marginBottom: '20px', flexWrap: 'wrap' }}>
+                  <button
                     onClick={() => handleAction(selectedLeave.id, 'Approved', adminRemarks)}
-                    style={{ flex: 2, padding: isMobile ? '15px' : '20px', borderRadius: '18px', border: 'none', backgroundColor: '#0B1E3F', color: 'white', fontWeight: '1000', fontSize: isMobile ? '12px' : '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', boxShadow: '0 10px 25px rgba(11,30,63,0.2)' }}
+                    style={{
+                      flex: 1, minWidth: '120px', padding: '12px 24px', borderRadius: '12px',
+                      border: 'none', backgroundColor: '#22c55e', color: 'white',
+                      fontSize: '13px', fontWeight: '900', cursor: 'pointer',
+                      textTransform: 'uppercase', letterSpacing: '0.5px',
+                      boxShadow: '0 6px 20px rgba(34, 197, 94, 0.15)', transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(34, 197, 94, 0.25)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(34, 197, 94, 0.15)'; }}
                   >
-                    <CheckCircle size={18} /> Approve Leave
+                    ✓ Approve
+                  </button>
+                  <button
+                    onClick={() => handleAction(selectedLeave.id, 'Rejected', adminRemarks)}
+                    style={{
+                      flex: 1, minWidth: '120px', padding: '12px 24px', borderRadius: '12px',
+                      border: 'none', backgroundColor: '#ef4444', color: 'white',
+                      fontSize: '13px', fontWeight: '900', cursor: 'pointer',
+                      textTransform: 'uppercase', letterSpacing: '0.5px',
+                      boxShadow: '0 6px 20px rgba(239, 68, 68, 0.15)', transition: 'all 0.3s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-1px)'; e.currentTarget.style.boxShadow = '0 10px 25px rgba(239, 68, 68, 0.25)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 6px 20px rgba(239, 68, 68, 0.15)'; }}
+                  >
+                    ✗ Reject
                   </button>
                 </div>
               )}
+
+              {/* Bottom spacing to prevent merging with navigation dock */}
+              <div style={{ height: '60px' }} />
+
             </motion.div>
           </motion.div>
         )}

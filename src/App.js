@@ -2,7 +2,6 @@ import React from 'react';
 import { useAuth } from './AuthContext.js';
 import SuperAdminHomeWeb from './HomeScreen.web.js';
 import LoginScreen from './LoginScreen.js';
-import SaturdayRequirementsPopover from './SaturdayRequirementsPopover.js';
 
 export default function App() {
   const { user, loading } = useAuth();
@@ -18,7 +17,6 @@ export default function App() {
   return (
     <>
       {user ? <SuperAdminHomeWeb /> : <LoginScreen />}
-      {user && <SaturdayRequirementsPopover />}
     </>
   );
 }

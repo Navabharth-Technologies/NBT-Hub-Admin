@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Cake, ChevronLeft, RefreshCcw, Gift, Calendar } from 'lucide-react';
+import { Cake, ChevronLeft, RefreshCcw, Gift, Calendar, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from './AuthContext';
 import { API_ENDPOINTS, BASE_URL } from './config';
@@ -42,9 +42,11 @@ const BirthdayScreen = ({ onBack }) => {
     // Handle DD-MM-YYYY or DD/MM/YYYY
     if (/^\d{2}[-/]\d{2}[-/]\d{4}$/.test(dStr)) {
       const parts = dStr.split(/[-/]/);
-      return new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      const d = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+      return isNaN(d.getTime()) ? new Date() : d;
     }
-    return new Date(dStr);
+    const d = new Date(dStr);
+    return isNaN(d.getTime()) ? new Date() : d;
   };
 
   const fetchBirthdays = async () => {
@@ -275,17 +277,10 @@ const BirthdayScreen = ({ onBack }) => {
 
   return (
     <div style={s.container}>
-      <button
-        onClick={onBack}
-        style={{ width: 'fit-content', border: 'none', background: 'white', padding: '12px 20px', borderRadius: '15px', display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontSize: '12px', fontWeight: '1000', color: '#0B1E3F', boxShadow: '0 4px 15px rgba(0,0,0,0.05)' }}
-      >
-        <ChevronLeft size={16} /> Back to Dashboard
-      </button>
+      <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
 
       <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} style={s.headerCard}>
-        <div style={s.syncStatus}>
-          <RefreshCcw size={14} /> Data Synced With NBT Hub Profiles
-        </div>
+
         <div style={s.cakeIcon}>
           <Cake size={40} strokeWidth={1.5} />
         </div>
@@ -313,7 +308,7 @@ const BirthdayScreen = ({ onBack }) => {
                     <div style={s.name}>{person.name}</div>
                     <div style={s.dateLine}>
                       <Cake size={14} color="#FDB913" />
-                      {new Date(person.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      {parseSafe(person.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}
                     </div>
                   </div>
                 </div>

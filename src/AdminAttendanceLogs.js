@@ -81,9 +81,7 @@ export default function AdminAttendanceLogs({ onBack }) {
   return (
     <div style={{ padding: isMobile ? '16px' : '32px', background: '#F8FAFC', minHeight: '100vh', fontFamily: 'Inter, sans-serif' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: isMobile ? '20px' : '32px' }}>
-        <button onClick={onBack} style={{ background: 'white', border: '1px solid #E2E8F0', padding: '10px', borderRadius: '12px', cursor: 'pointer' }}>
-          <ArrowLeft size={18} />
-        </button>
+        <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
         <div>
           <h1 style={{ fontSize: isMobile ? '18px' : '24px', fontWeight: '900', color: '#0F172A', margin: 0 }}>Attendance Logs</h1>
           <p style={{ margin: 0, color: '#64748B', fontWeight: '600', fontSize: isMobile ? '11px' : '13px' }}>Super Admin Workforce View</p>

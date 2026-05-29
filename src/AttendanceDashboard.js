@@ -420,12 +420,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
         {/* New Tabbed Header from Screenshot */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px', marginBottom: '32px', borderBottom: '1px solid #E2E8F0', paddingBottom: '12px' }}>
           {onBack && (
-            <div 
-              onClick={onBack} 
-              style={{ cursor: 'pointer', backgroundColor: 'white', padding: '10px', borderRadius: '12px', boxShadow: '0 4px 6px rgba(0,0,0,0.02)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #eef2f6' }}
-            >
-              <ArrowLeft size={20} color="#64748b" />
-            </div>
+            <button onClick={onBack} style={{ width: '40px', height: '40px', borderRadius: '12px', background: 'white', border: '2px solid #bfdbfe', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, padding: 0 }}><ArrowLeft size={18} color="#0f172a" /></button>
           )}
           <div style={{ fontSize: isMobile ? '13px' : '14px', fontWeight: '800', color: '#2563EB', borderBottom: '2.5px solid #2563EB', paddingBottom: '10px', cursor: 'pointer' }}>Attendance Logs</div>
         </div>
