@@ -50,12 +50,18 @@ export default function UserManagement({ onBack }) {
 
   const isMobile = winWidth < 768;
 
-  const filteredUsers = users.filter(u => 
-    (selectedDepartment === 'All' || u.team === selectedDepartment) &&
-    (u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.role.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.team.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredUsers = users.filter(u => {
+    const name = (u.name || '').toLowerCase();
+    const email = (u.email || '').toLowerCase();
+    const role = (u.role || '').toLowerCase();
+    
+    if (name.includes('dinesh') || email.includes('dinesh') || role.includes('founder')) return false;
+    
+    return (selectedDepartment === 'All' || u.team === selectedDepartment) &&
+    (name.includes(searchTerm.toLowerCase()) ||
+    role.includes(searchTerm.toLowerCase()) ||
+    (u.team || '').toLowerCase().includes(searchTerm.toLowerCase()));
+  });
 
   const departments = ['All', ...new Set(users.map(u => u.team).filter(Boolean))];
 

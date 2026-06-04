@@ -85,8 +85,25 @@ export const ThreadProvider = ({ children }) => {
         const officialLikeCount = rawReactions['like'] !== undefined ? rawReactions['like'] : (t.like_count !== undefined ? t.like_count : (t.likeCount || 0));
         const officialUserLiked = rawUserReactions['like'] === true || (t.user_has_liked !== undefined ? t.user_has_liked : (t.userHasLiked || false));
 
+        let finalContent = t.content || '';
+        let finalTagline = t.tagline || '';
+        
+        // Decode legacy posts that had tagline injected into content
+        if (!finalTagline && finalContent.startsWith('TAGLINE:')) {
+            const newlineIdx = finalContent.indexOf('\n');
+            if (newlineIdx !== -1) {
+                finalTagline = finalContent.substring(8, newlineIdx).trim();
+                finalContent = finalContent.substring(newlineIdx + 1).trim();
+            } else {
+                finalTagline = finalContent.substring(8).trim();
+                finalContent = '';
+            }
+        }
+
         return {
           ...t,
+          tagline: finalTagline,
+          content: finalContent,
           userId: t.user_id || t.userId,
           likeCount: officialLikeCount,
           badgeCount: t.badge_count !== undefined ? t.badge_count : (t.badgeCount || 0),
@@ -155,6 +172,8 @@ export const ThreadProvider = ({ children }) => {
         });
       }
 
+      let payloadContent = post.content || ' ';
+
       // OPTIMISTIC UPDATE: Instantly display the thread on the screen before the database responds!
       const optimisticPost = {
         id: 'temp-' + Date.now(),
@@ -163,7 +182,7 @@ export const ThreadProvider = ({ children }) => {
         userName: post.user,
         role: post.role || 'EMPLOYEE',
         tagline: post.tagline || '',
-        content: post.content || '',
+        content: payloadContent,
         mediaUrl: mediaData,
         mediaType: post.mediaType,
         createdAt: new Date().toISOString(),
@@ -190,7 +209,7 @@ export const ThreadProvider = ({ children }) => {
           userName: post.user,
           role: post.role || 'EMPLOYEE',
           tagline: post.tagline || '',
-          content: post.content || '',
+          content: payloadContent,
           media: mediaData,
           mediaType: post.mediaType
         })
@@ -397,6 +416,10 @@ export const ThreadProvider = ({ children }) => {
   };
 
   const deletePost = async (id) => {
+    if (String(id).startsWith('temp-')) {
+      setThreads(prev => prev.filter(t => t.id !== id));
+      return true;
+    }
     try {
       const token = localStorage.getItem('token');
       const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
@@ -413,8 +436,10 @@ export const ThreadProvider = ({ children }) => {
       });
       if (res.ok) {
         await fetchThreads();
+        return true;
       }
-    } catch { }
+      return false;
+    } catch { return false; }
   };
 
   const fetchSingleThread = async (id) => {
@@ -451,6 +476,9 @@ export const ThreadProvider = ({ children }) => {
   };
 
   const deleteComment = async (threadId, commentId) => {
+    if (String(commentId).startsWith('temp-')) {
+      return true;
+    }
     try {
       const token = localStorage.getItem('token');
       const headers = { 'Content-Type': 'application/json', 'Accept': 'application/json' };
@@ -465,8 +493,12 @@ export const ThreadProvider = ({ children }) => {
         headers,
         body: JSON.stringify({ userId: user?.id, user_id: user?.id })
       });
-      if (res.ok) await fetchThreads();
-    } catch { }
+      if (res.ok) {
+        await fetchThreads();
+        return true;
+      }
+      return false;
+    } catch { return false; }
   };
 
   const updateComment = async (threadId, commentId, content) => {

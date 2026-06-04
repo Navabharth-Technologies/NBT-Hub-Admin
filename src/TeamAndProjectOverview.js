@@ -369,15 +369,7 @@ export default function TeamAndProjectOverview({ onBack }) {
                   </div>
                 </div>
 
-                <div style={styles.progressSection}>
-                  <div style={styles.progressLabelRow}>
-                    <span style={styles.progressLabel}>Overall Progress</span>
-                    <span style={styles.progressValue}>{team.progress || 0}%</span>
-                  </div>
-                  <div style={styles.progressBar}>
-                    <div style={styles.progressFill(team.progress || 0)} />
-                  </div>
-                </div>
+
 
                 {isZoomed && (
                   <div style={styles.rosterContainer}>

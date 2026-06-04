@@ -400,7 +400,7 @@ export default function SuperAdminHomeWeb() {
       const headers = { 'Authorization': token ? `Bearer ${token.trim()}` : '', 'Accept': 'application/json' };
 
       // Parallel fetch for all dashboard components
-      const [calendarRes, bdayRes, userRes, teamRes, sugRes, sugAdminRes, runningRes, completedRes] = await Promise.all([
+      const [calendarRes, bdayRes, userRes, teamRes, sugRes, sugAdminRes, runningRes, completedRes, dashStatsRes] = await Promise.all([
         fetch(API_ENDPOINTS.HOLIDAYS, { headers }).catch(() => null),
         fetch(API_ENDPOINTS.BIRTHDAYS, { headers }).catch(() => null),
         fetch(API_ENDPOINTS.USERS, { headers }).catch(() => null),
@@ -408,7 +408,8 @@ export default function SuperAdminHomeWeb() {
         fetch(API_ENDPOINTS.SUGGESTIONS, { headers }).catch(() => null),
         fetch(API_ENDPOINTS.SUGGESTIONS_ADMIN, { headers }).catch(() => null),
         fetch(API_ENDPOINTS.TASKS_RUNNING, { headers }).catch(() => null),
-        fetch(API_ENDPOINTS.TASKS_COMPLETED, { headers }).catch(() => null)
+        fetch(API_ENDPOINTS.TASKS_COMPLETED, { headers }).catch(() => null),
+        fetch(API_ENDPOINTS.DASHBOARD_STATS, { headers }).catch(() => null)
       ]);
 
       const safeJson = async (res) => {
@@ -534,9 +535,19 @@ export default function SuperAdminHomeWeb() {
       setCalendarItems(cal.sort((a, b) => new Date(a.date) - new Date(b.date)));
 
       if (userRes?.ok) {
-        uData = await safeJson(userRes) || [];
-        setEmployees(Array.isArray(uData) ? uData.slice(0, 3) : []);
-        setUsersDataList(Array.isArray(uData) ? uData : []);
+        let rawUData = await safeJson(userRes) || [];
+        if (Array.isArray(rawUData)) {
+          uData = rawUData.filter(u => {
+            const name = (u.name || '').toLowerCase();
+            const email = (u.email || '').toLowerCase();
+            const role = (u.role || '').toLowerCase();
+            return !name.includes('dinesh') && !email.includes('dinesh') && !role.includes('founder');
+          });
+        } else {
+          uData = [];
+        }
+        setEmployees(uData.slice(0, 3));
+        setUsersDataList(uData);
       }
 
       if (teamRes?.ok) {
@@ -669,12 +680,26 @@ export default function SuperAdminHomeWeb() {
       setRunningProjects(finalRunning);
       setCompletedProjects(finalCompleted);
 
+      // Use backend dashboard-stats endpoint as primary source, fallback to computed values
+      let backendStats = null;
+      if (dashStatsRes?.ok) {
+        const statsRaw = await safeJson(dashStatsRes);
+        if (statsRaw && typeof statsRaw === 'object') {
+          backendStats = statsRaw;
+        }
+      }
+
+      const computedWorkforce = Array.isArray(uData) ? uData.length : 0;
+      const computedTeams = Array.isArray(tData) ? tData.length : 0;
+      const computedRunning = finalRunning.length;
+      const computedCompleted = finalCompleted.length;
+
       setStats({
-        workforce: Array.isArray(uData) ? uData.length : 0,
-        teams: Array.isArray(tData) ? tData.length : 0,
-        analytics: '98%',
-        running: finalRunning.length,
-        completed: finalCompleted.length
+        workforce: backendStats?.workforce ?? backendStats?.employees ?? backendStats?.total_employees ?? computedWorkforce,
+        teams: backendStats?.teams ?? backendStats?.total_teams ?? computedTeams,
+        analytics: backendStats?.analytics ?? backendStats?.performance ?? (computedWorkforce > 0 ? `${Math.round((computedCompleted / Math.max(computedRunning + computedCompleted, 1)) * 100)}%` : '0%'),
+        running: backendStats?.running ?? backendStats?.running_projects ?? computedRunning,
+        completed: backendStats?.completed ?? backendStats?.completed_projects ?? computedCompleted
       });
 
     } catch (err) {

@@ -11,8 +11,9 @@ export const API_ENDPOINTS = {
   HOLIDAYS: `${BASE_URL}/api/holidays`,
   USERS: `${BASE_URL}/api/users`,
   THREADS: `${BASE_URL}/api/threads`,
-  THREAD_REACT: (id) => `${BASE_URL}/api/threads/${id}/react`,
-  THREAD_COMMENT: (id) => `${BASE_URL}/api/threads/${id}/comments`,
+  POST_REACT: (postId) => `${BASE_URL}/api/posts/${postId}/react`,
+
+  THREAD_COMMENT: (id) => `${BASE_URL}/api/threads/${id}/comment`,
   THREAD_COMMENTS: (id) => `${BASE_URL}/api/threads/${id}/comments`,
   THREAD_REACTORS: (id, type) => `${BASE_URL}/api/threads/${id}/reactors?type=${type}`,
   THREAD_DELETE: (id) => `${BASE_URL}/api/threads/${id}`,
@@ -52,10 +53,10 @@ export const calculateDeterministicProgress = (team) => {
   if (!team) return 85;
   const rawProgress = parseFloat(team.progress || team.completion || team.percentage || team.percent || 0);
   if (rawProgress > 0 && rawProgress !== 85) return rawProgress;
-  
+
   const nameStr = String(team.name || team.team_name || team.id || '').trim().toLowerCase();
   if (!nameStr) return 85;
-  
+
   let hash = 0;
   for (let i = 0; i < nameStr.length; i++) {
     hash = nameStr.charCodeAt(i) + ((hash << 5) - hash);

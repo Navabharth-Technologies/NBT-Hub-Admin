@@ -18,7 +18,6 @@ export default function ThreadScreen() {
     const { threads, unreadCount, loading, clearNotifications, addPost, deletePost, updatePost, deleteComment, updateComment, toggleReaction, toggleBadge, addComment, fetchComments, fetchReactors } = useThread();
     const { user } = useAuth();
 
-    const [tagline, setTagline] = useState('');
     const [newPost, setNewPost] = useState('');
     const [mediaFile, setMediaFile] = useState(null);
     const [mediaType, setMediaType] = useState(null);
@@ -36,6 +35,8 @@ export default function ThreadScreen() {
     const [editContent, setEditContent] = useState('');
     const [editingCommentId, setEditingCommentId] = useState(null);
     const [editCommentContent, setEditCommentContent] = useState('');
+    const [postToDelete, setPostToDelete] = useState(null);
+    const [commentToDelete, setCommentToDelete] = useState(null);
     const [winWidth, setWinWidth] = useState(window.innerWidth);
     const isMobile = winWidth < 768;
     const isTablet = winWidth < 1024;
@@ -95,13 +96,11 @@ export default function ThreadScreen() {
                 userId: uid,
                 user: user?.name || 'User',
                 role: user?.role?.toUpperCase() || 'EMPLOYEE',
-                tagline: tagline,
                 content: newPost,
                 file: mediaFile,
                 mediaType: mediaType
             });
             setNewPost('');
-            setTagline('');
             clearMedia();
         } catch (err) {
             console.error("Post Error:", err);
@@ -205,7 +204,7 @@ export default function ThreadScreen() {
         mediaBtn: { display: 'flex', alignItems: 'center', gap: '8px', padding: isMobile ? '8px 12px' : '10px 18px', borderRadius: '12px', border: '1.5px solid #eef2f6', background: 'white', cursor: 'pointer', fontSize: isMobile ? '10px' : '12px', fontWeight: '800', color: '#64748b' },
         postBtn: { padding: isMobile ? '10px 15px' : '12px 30px', backgroundColor: '#315A9E', color: 'white', border: 'none', borderRadius: '15px', fontWeight: '1000', cursor: 'pointer', fontSize: isMobile ? '9px' : '11px', textTransform: 'uppercase' },
         threadCard: { backgroundColor: 'white', borderRadius: isMobile ? '25px' : '40px', padding: isMobile ? '20px' : '24px 30px', border: '1px solid #f1f5f9', position: 'relative', boxShadow: '0 10px 40px rgba(0,0,0,0.03)', marginBottom: '20px', transition: 'transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)' },
-        taglineBadge: { display: 'inline-block', padding: '4px 10px', borderRadius: '8px', background: '#f0f9ff', color: '#315A9E', fontSize: isMobile ? '8px' : '9px', fontWeight: '900', textTransform: 'uppercase', marginBottom: '12px', border: '1px solid #e0f2fe' },
+        taglineBadge: { display: 'inline-block', padding: '6px 12px', borderRadius: '8px', background: '#f0f9ff', color: '#315A9E', fontSize: isMobile ? '13px' : '15px', fontWeight: '900', textTransform: 'uppercase', marginBottom: '12px', marginTop: '12px', border: '1px solid #e0f2fe' },
         postMedia: { marginTop: '20px', borderRadius: '25px', overflow: 'hidden', border: '1.5px solid #f8fafc', maxHeight: isMobile ? '300px' : '380px', maxWidth: '100%', width: 'fit-content', backgroundColor: '#fdfdfd', display: 'flex', justifyContent: 'flex-start', alignItems: 'center' },
         footer: { display: 'flex', justifyContent: 'space-between', borderTop: '1px solid #f1f5f9', paddingTop: '18px', marginTop: '20px', gap: isMobile ? '4px' : '10px', flexWrap: 'wrap' },
         action: (active, color) => ({
@@ -316,7 +315,6 @@ export default function ThreadScreen() {
         <div style={styles.container}>
             {/* CREATE THREAD */}
             <div style={{ ...styles.card, borderTop: '5px solid #FDB913' }}>
-                <input style={styles.tagInput} placeholder="Add a tagline..." value={tagline} onChange={e => setTagline(e.target.value)} />
                 <textarea style={styles.mainInput} placeholder="Share an update with the team..." value={newPost} onChange={e => setNewPost(e.target.value)} />
 
                 <input type="file" ref={fileInputRef} onChange={handleFileSelect} hidden accept="image/*,video/*" />
@@ -398,58 +396,70 @@ export default function ThreadScreen() {
                             </div>
 
                             {canManage && (
-                                <div style={{ display: 'flex', gap: '5px' }}>
-                                    <button
-                                        onClick={() => {
-                                            setEditingPostId(post.id);
-                                            setEditContent(post.content);
-                                        }}
-                                        style={{ border: 'none', background: '#f8fafc', color: '#315A9E', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                        title="Edit post"
-                                    >
-                                        <Edit3 size={16} />
-                                    </button>
-                                    <button
-                                        onClick={() => deletePost(post.id)}
-                                        style={{ border: 'none', background: '#fef2f2', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                                        title="Delete post"
-                                    >
-                                        <Trash2 size={16} />
-                                    </button>
+                                <div style={{ display: 'flex', gap: '5px', alignItems: 'center' }}>
+                                    {postToDelete === post.id ? (
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '6px 12px', background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '12px' }}>
+                                            <span style={{ fontSize: '11px', fontWeight: '800', color: '#ef4444' }}>Are you sure you want to delete this thread?</span>
+                                            <button onClick={(e) => { e.stopPropagation(); deletePost(post.id); setPostToDelete(null); }} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '6px', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>Yes</button>
+                                            <button onClick={(e) => { e.stopPropagation(); setPostToDelete(null); }} style={{ background: 'white', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: '6px', padding: '4px 8px', fontSize: '10px', fontWeight: 'bold', cursor: 'pointer' }}>No</button>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <button
+                                                onClick={() => {
+                                                    setEditingPostId(post.id);
+                                                    setEditContent(post.content);
+                                                }}
+                                                style={{ border: 'none', background: '#f8fafc', color: '#315A9E', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                title="Edit post"
+                                            >
+                                                <Edit3 size={16} />
+                                            </button>
+                                            <button
+                                                onClick={() => setPostToDelete(post.id)}
+                                                style={{ border: 'none', background: '#fef2f2', color: '#ef4444', padding: '10px', borderRadius: '12px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                                                title="Delete post"
+                                            >
+                                                <Trash2 size={16} />
+                                            </button>
+                                        </>
+                                    )}
                                 </div>
                             )}
                         </div>
 
-                        <div style={{ marginTop: '14px', fontSize: '15px', color: '#0B1E3F', lineHeight: '1.6', fontWeight: '600', whiteSpace: 'pre-wrap' }}>
-                            {isEditing ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                                    <textarea
-                                        style={{ ...styles.mainInput, minHeight: '80px', padding: '15px' }}
-                                        value={editContent}
-                                        onChange={(e) => setEditContent(e.target.value)}
-                                    />
-                                    <div style={{ display: 'flex', gap: '10px' }}>
-                                        <button
-                                            onClick={() => {
-                                                updatePost(post.id, editContent);
-                                                setEditingPostId(null);
-                                            }}
-                                            style={{ backgroundColor: '#315A9E', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer' }}
-                                        >
-                                            SAVE
-                                        </button>
-                                        <button
-                                            onClick={() => setEditingPostId(null)}
-                                            style={{ background: 'none', border: '1.5px solid #e2e8f0', color: '#64748b', padding: '8px 20px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer' }}
-                                        >
-                                            CANCEL
-                                        </button>
+                        {(isEditing || (post.content && post.content.trim() !== '')) && (
+                            <div style={{ marginTop: '14px', fontSize: '15px', color: '#0B1E3F', lineHeight: '1.6', fontWeight: '600', whiteSpace: 'pre-wrap' }}>
+                                {isEditing ? (
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                        <textarea
+                                            style={{ ...styles.mainInput, minHeight: '80px', padding: '15px' }}
+                                            value={editContent}
+                                            onChange={(e) => setEditContent(e.target.value)}
+                                        />
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <button
+                                                onClick={() => {
+                                                    updatePost(post.id, editContent);
+                                                    setEditingPostId(null);
+                                                }}
+                                                style={{ backgroundColor: '#315A9E', color: 'white', border: 'none', padding: '8px 20px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer' }}
+                                            >
+                                                SAVE
+                                            </button>
+                                            <button
+                                                onClick={() => setEditingPostId(null)}
+                                                style={{ background: 'none', border: '1.5px solid #e2e8f0', color: '#64748b', padding: '8px 20px', borderRadius: '10px', fontWeight: '900', cursor: 'pointer' }}
+                                            >
+                                                CANCEL
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ) : (
-                                post.content
-                            )}
-                        </div>
+                                ) : (
+                                    post.content
+                                )}
+                            </div>
+                        )}
 
                         {/* Support multiple field names and direct base64/relative URLs with type safety */}
                         {(() => {
@@ -589,9 +599,29 @@ export default function ThreadScreen() {
                                                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '4px' }}>
                                                                 <span style={{ fontSize: '12px', fontWeight: '1000', color: '#0B1E3F' }}>{cUser}</span>
                                                                 {isMyComment && (
-                                                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                                                        <button onClick={() => { setEditingCommentId(c.id); setEditCommentContent(cText); }} style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', padding: '2px' }}><Edit3 size={13} /></button>
-                                                                        <button onClick={() => deleteComment(post.id, c.id)} style={{ border: 'none', background: 'none', color: '#fda4af', cursor: 'pointer', padding: '2px' }}><Trash2 size={13} /></button>
+                                                                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                                                        {commentToDelete === c.id ? (
+                                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: '#fef2f2', padding: '4px 8px', borderRadius: '8px', border: '1px solid #fca5a5' }}>
+                                                                                <span style={{ fontSize: '10px', fontWeight: '800', color: '#ef4444' }}>Delete comment?</span>
+                                                                                <button onClick={async (e) => { 
+                                                                                    e.stopPropagation();
+                                                                                    const success = await deleteComment(post.id, c.id); 
+                                                                                    if (success !== false) {
+                                                                                        setPostComments(prev => ({
+                                                                                            ...prev,
+                                                                                            [post.id]: (prev[post.id] || []).filter(comment => comment.id !== c.id)
+                                                                                        }));
+                                                                                    }
+                                                                                    setCommentToDelete(null); 
+                                                                                }} style={{ background: '#ef4444', color: 'white', border: 'none', borderRadius: '4px', padding: '2px 6px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>Yes</button>
+                                                                                <button onClick={(e) => { e.stopPropagation(); setCommentToDelete(null); }} style={{ background: 'white', color: '#64748b', border: '1px solid #cbd5e1', borderRadius: '4px', padding: '2px 6px', fontSize: '9px', fontWeight: 'bold', cursor: 'pointer' }}>No</button>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <>
+                                                                                <button onClick={() => { setEditingCommentId(c.id); setEditCommentContent(cText); }} style={{ border: 'none', background: 'none', color: '#94a3b8', cursor: 'pointer', padding: '2px' }}><Edit3 size={13} /></button>
+                                                                                <button onClick={() => setCommentToDelete(c.id)} style={{ border: 'none', background: 'none', color: '#fda4af', cursor: 'pointer', padding: '2px' }}><Trash2 size={13} /></button>
+                                                                            </>
+                                                                        )}
                                                                     </div>
                                                                 )}
                                                             </div>

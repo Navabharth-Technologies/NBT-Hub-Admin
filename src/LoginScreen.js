@@ -10,7 +10,7 @@ export default function LoginScreen() {
   const { login } = useAuth();
   const [email, setEmail] = useState('dinesh@navabharathtechnologies.com');
   const [emailError, setEmailError] = useState('');
-  const [password, setPassword] = useState('password');
+  const [password, setPassword] = useState('123456');
   const [showPassword, setShowPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
