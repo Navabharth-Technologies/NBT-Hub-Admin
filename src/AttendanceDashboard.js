@@ -299,7 +299,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
       const rowData = [
         `"${(log.EmployeeName || log.name || log.userName || '-').replace(/"/g, '""')}"`,
         `"${(log.Empcode || log.userId || log.employee_id || '-').toString().replace(/"/g, '""')}"`,
-        `"${(log.punch_date || log.date || '-').replace(/"/g, '""')}"`,
+        `"'${(log.punch_date || log.date || '-').replace(/"/g, '""')}"`,
         `"${(log.in_time || log.punch_in || log.check_in || '--:--').replace(/"/g, '""')}"`,
         `"${(log.out_time || log.punch_out || log.check_out || '--:--').replace(/"/g, '""')}"`,
         `"${(log.work_hrs || log.work_time || log.work_hours || '00:00').replace(/"/g, '""')}"`,
@@ -309,7 +309,7 @@ export default function AttendanceDashboard({ onBack, onNavigate }) {
     });
 
     const csvContent = tableColumn.join(',') + '\n' + tableRows.join('\n');
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
     const link = document.createElement('a');
     link.href = URL.createObjectURL(blob);
     link.download = `Attendance_Report_${dateRange.start}_to_${dateRange.end}.csv`;
