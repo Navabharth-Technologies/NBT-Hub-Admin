@@ -47,7 +47,7 @@ function convertToDisplayDateFormat(dateStr) {
 }
 
 export default function ProfileScreen({ onBack }) {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [winWidth, setWinWidth] = useState(window.innerWidth);
 
   // Editing states
@@ -1001,7 +1001,11 @@ export default function ProfileScreen({ onBack }) {
         whileHover={{ scale: 1.02, backgroundColor: 'rgba(239, 68, 68, 0.04)' }}
         whileTap={{ scale: 0.98 }}
         style={styles.logoutBtn}
-        onClick={() => { if (window.confirm('Securely end this session?')) window.location.reload(); }}
+        onClick={() => { 
+          if (window.confirm('Securely end this session?')) {
+            logout();
+          } 
+        }}
       >
         <LogOut size={16} />
         Secure Logout
